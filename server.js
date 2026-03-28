@@ -21,11 +21,12 @@ const express = require('express');
 const cors    = require('cors');
 
 // ─── Internal Modules ────────────────────────────────────────────────────────
-const { validateEnv }   = require('./src/config/env');
-const { connectDB }     = require('./src/config/db');
-const apiRoutes         = require('./src/routes/index');
-const { errorHandler }  = require('./src/middleware/errorHandler');
-const { requestLogger } = require('./src/middleware/logger');
+const { validateEnv }     = require('./src/config/env');
+// const { connectDB }     = require('./src/config/db');        // PostgreSQL
+const { connectSupabase } = require('./src/config/supabase');  // Supabase
+const apiRoutes           = require('./src/routes/index');
+const { errorHandler }    = require('./src/middleware/errorHandler');
+const { requestLogger }   = require('./src/middleware/logger');
 
 // ─── Validasi Environment Variables ──────────────────────────────────────────
 // Aplikasi BERHENTI jika ada env variable yang wajib tidak ada.
@@ -68,7 +69,7 @@ app.use(errorHandler);
 // Dibungkus async agar bisa await koneksi database sebelum server start.
 const startServer = async () => {
   try {
-    await connectDB(); // tunggu koneksi PostgreSQL berhasil dulu
+    await connectSupabase(); // tunggu koneksi Supabase berhasil dulu
 
     const server = http.createServer(app);
     server.listen(PORT, () => {

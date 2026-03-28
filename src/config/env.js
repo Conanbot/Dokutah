@@ -12,13 +12,21 @@
 
 // Daftar env variable yang wajib ada agar aplikasi bisa berjalan
 const REQUIRED_VARS = [
-  'DB_USER',
-  'DB_HOST',
-  'DB_NAME',
-  'DB_PASSWORD',
-  'DB_PORT',
+  'SUPABASE_URL',
+  'SUPABASE_ANON_KEY',
+  'SUPABASE_SERVICE_ROLE_KEY',
   'GOOGLE_MAPS_API_KEY',
 ];
+
+// Database variables (optional if using Supabase)
+// Uncomment if you want to keep direct PostgreSQL connection alongside Supabase
+// const DB_VARS = [
+//   'DB_USER',
+//   'DB_HOST',
+//   'DB_NAME',
+//   'DB_PASSWORD',
+//   'DB_PORT',
+// ];
 
 // OPTIONAL: hanya dibaca jika ada, tidak akan menyebabkan crash
 const OPTIONAL_VARS = [
@@ -48,10 +56,9 @@ const createEnvValidator = (required) => {
 
     // Destructuring dari process.env untuk tampilkan info startup
     const { NODE_ENV = 'development', PORT = '3000' } = process.env;
-    console.log(`\n[ENV] Mode     : ${NODE_ENV}`);
-    console.log(`[ENV] Port     : ${PORT}`);
-    console.log(`[ENV] DB Host  : ${process.env.DB_HOST}`);
-    console.log(`[ENV] DB Name  : ${process.env.DB_NAME}`);
+    console.log(`\n[ENV] Mode                    : ${NODE_ENV}`);
+    console.log(`[ENV] Port                    : ${PORT}`);
+    console.log(`[ENV] Supabase URL            : ${process.env.SUPABASE_URL}`);
     console.log('[ENV] Semua environment variable berhasil divalidasi ✅\n');
   };
 };
