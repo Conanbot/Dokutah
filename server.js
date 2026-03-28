@@ -1,75 +1,98 @@
-const express = require('express');
-const cors = require('cors');
-const { Pool } = require('pg');
+'use strict';
+
+// ─── Load .env PERTAMA sebelum modul lain ────────────────────────────────────
+// WAJIB di baris pertama agar semua modul di bawah sudah bisa baca process.env
+require('dotenv').config();
+
+/**
+ * server.js — Entry Point Aplikasi "Belajar Lagi Dok"
+ * Tugas Nico: Backend Node.js + Express
+ *
+ * File ini hanya bertanggung jawab sebagai titik masuk aplikasi.
+ * Semua konfigurasi, route, dan middleware didelegasikan ke modul masing-masing.
+ */
+
+// ─── Core Modules ────────────────────────────────────────────────────────────
 const path = require('path');
+const http = require('http');
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+// ─── NPM Modules ─────────────────────────────────────────────────────────────
+const express = require('express');
+const cors    = require('cors');
 
-// Koneksi ke PostgreSQL (Sesuaikan password dengan milikmu)
-const pool = new Pool({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'rs_sehat',
-    password: 'password_database_kamu', 
-    port: 5432,
-});
-app.get('/', (req, res) => {
-res.sendFile(path.join(__dirname, 'index.html'));
-});
-// API: Ambil semua jadwal dokter untuk ditampilkan di Frontend
-app.get('/api/jadwal', async (req, res) => {
-    try {
-        const result = await pool.query(`
-            SELECT j.id_jadwal, d.nama_dokter, j.hari, j.kuota_maksimal 
-            FROM jadwal_praktik j 
-            JOIN dokter d ON j.id_dokter = d.id_dokter
-        `);
-        res.json(result.rows);
-    } catch (err) {
-        res.status(500).send("Error mengambil data");
-    }
-});
+// ─── Internal Modules ────────────────────────────────────────────────────────
+const { validateEnv }   = require('./src/config/env');
+const { connectDB }     = require('./src/config/db');
+const apiRoutes         = require('./src/routes/index');
+const { errorHandler }  = require('./src/middleware/errorHandler');
+const { requestLogger } = require('./src/middleware/logger');
 
-// API: Proses Pemesanan (Logika Cek Kuota)
-app.post('/api/pesan', async (req, res) => {
-    const { id_jadwal, nama_pasien } = req.body;
+// ─── Validasi Environment Variables ──────────────────────────────────────────
+// Aplikasi BERHENTI jika ada env variable yang wajib tidak ada.
+validateEnv();
 
-    try {
-        // 1. Cek berapa pasien yang sudah mendaftar di jadwal ini
-        const cekKuota = await pool.query(
-            'SELECT COUNT(*) as total FROM pemesanan WHERE id_jadwal = $1', 
-            [id_jadwal]
-        );
-        const pasienTerdaftar = parseInt(cekKuota.rows[0].total);
+// ─── Inisialisasi Aplikasi ────────────────────────────────────────────────────
+const app  = express();
+const PORT = process.env.PORT || 3000;
 
-        // 2. Ambil batas kuota maksimal dari jadwal
-        const jadwal = await pool.query(
-            'SELECT kuota_maksimal FROM jadwal_praktik WHERE id_jadwal = $1', 
-            [id_jadwal]
-        );
-        const kuotaMaksimal = jadwal.rows[0].kuota_maksimal;
+// ─── Global Middleware ────────────────────────────────────────────────────────
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
-        // 3. Logika penolakan jika penuh
-        if (pasienTerdaftar >= kuotaMaksimal) {
-            return res.status(400).json({ pesan: "Maaf, kuota dokter untuk jadwal ini sudah penuh!" });
-        }
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true }));
+app.use(requestLogger); // log setiap request masuk
 
-        // 4. Jika kosong, masukkan data ke database
-        await pool.query(
-            'INSERT INTO pemesanan (id_jadwal, nama_pasien) VALUES ($1, $2)', 
-            [id_jadwal, nama_pasien]
-        );
-        
-        res.json({ pesan: "Puji Tuhan, pendaftaran berhasil!" });
+// ─── Static Files (Melayani HTML dari Dava) ───────────────────────────────────
+// Semua file HTML, CSS, JS frontend dilayani dari root folder.
+// CATATAN: file frontend Dava (index.html, style.css, dll) harus berada
+// di folder yang sama dengan server.js, atau sesuaikan path di bawah.
+app.use(express.static(path.join(__dirname, 'public')));
 
-    } catch (err) {
-        console.error(err);
-        res.status(500).send("Terjadi kesalahan pada server");
-    }
+// ─── API Routes ───────────────────────────────────────────────────────────────
+app.use('/api', apiRoutes);
+
+// ─── Fallback: Kirim index.html untuk semua route yang tidak dikenal ──────────
+// Diperlukan agar navigasi antar halaman HTML tetap berfungsi.
+app.get('/{*splat}', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(3000, () => {
-    console.log('Server Backend berjalan di http://localhost:3000');
-});
+// ─── Global Error Handler (HARUS di paling bawah) ────────────────────────────
+app.use(errorHandler);
+
+// ─── Jalankan Server ──────────────────────────────────────────────────────────
+// Dibungkus async agar bisa await koneksi database sebelum server start.
+const startServer = async () => {
+  try {
+    await connectDB(); // tunggu koneksi PostgreSQL berhasil dulu
+
+    const server = http.createServer(app);
+    server.listen(PORT, () => {
+      console.log(`\n✅ [SERVER] Berjalan di http://localhost:${PORT}`);
+      console.log(`📁 [STATIC] Melayani file frontend dari /public`);
+      console.log(`🌐 [API]    Endpoint tersedia di http://localhost:${PORT}/api\n`);
+    });
+
+    // Graceful shutdown — matikan server dengan bersih saat proses dihentikan
+    const shutdown = (signal) => {
+      console.log(`\n[SERVER] Menerima ${signal}, mematikan server...`);
+      server.close(() => {
+        console.log('[SERVER] Server berhasil dimatikan.');
+        process.exit(0);
+      });
+    };
+
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT',  () => shutdown('SIGINT'));
+
+  } catch (err) {
+    console.error('[SERVER] Gagal start:', err.message);
+    process.exit(1);
+  }
+};
+
+startServer();
