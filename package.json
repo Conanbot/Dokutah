@@ -4,11 +4,17 @@
   "description": "Backend API untuk platform navigasi layanan kesehatan Kota Salatiga — ACLEC 2026",
   "main": "server.js",
   "scripts": {
-    "start":   "node server.js",
-    "dev":     "nodemon server.js",
-    "lint":    "echo 'Jalankan: npx eslint src/ server.js'"
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "lint": "echo 'Jalankan: npx eslint src/ server.js'"
   },
-  "keywords": ["healthcare", "salatiga", "node", "express", "postgresql"],
+  "keywords": [
+    "healthcare",
+    "salatiga",
+    "node",
+    "express",
+    "postgresql"
+  ],
   "author": "Tim Dokutah — Nico (backend), Dava (frontend), Hans (database)",
   "license": "ISC",
   "type": "commonjs",
@@ -16,10 +22,11 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "cors":    "^2.8.6",
-    "dotenv":  "^16.4.5",
+    "@supabase/supabase-js": "^2.100.1",
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.5",
     "express": "^5.2.1",
-    "pg":      "^8.20.0"
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"
