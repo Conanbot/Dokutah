@@ -20,7 +20,7 @@ const router = Router();
 
 router.get('/nearby',      validate(schemas.koordinatSchema, 'query'), searchNearby);
 router.get('/all',         validate(schemas.koordinatSchema, 'query'), searchAllFaskes);
-router.get('/detail/:placeId', getPlaceDetails);
+router.get('/detail/:osmId', getPlaceDetails);
 router.get('/geocode',     geocode);
 
 module.exports = router;

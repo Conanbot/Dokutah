@@ -11,6 +11,7 @@ const { validateEnv } = require('./src/config/env');
 const apiRoutes = require('./src/routes/index');
 const { errorHandler } = require('./src/middleware/errorHandler');
 const { requestLogger } = require('./src/middleware/logger');
+const { connectSupabase } = require('./src/config/supabase');
 
 validateEnv();
 
@@ -34,11 +35,16 @@ app.use('/api', apiRoutes);
 app.use(errorHandler);
 
 const server = http.createServer(app);
-server.listen(PORT, () => {
-  console.log(`\n✅ Server running at http://localhost:${PORT}`);
-  console.log(`📁 Static files from /public`);
-  console.log(`🌐 APIs at http://localhost:${PORT}/api`);
-  console.log(`🔗 Open dokter.html: http://localhost:${PORT}/dokter.html\n`);
+connectSupabase().then(() => {
+  server.listen(PORT, () => {
+    console.log(`\n✅ Server running at http://localhost:${PORT}`);
+    console.log(`📁 Static files from /public`);
+    console.log(`🌐 APIs at http://localhost:${PORT}/api`);
+    console.log(`🔗 Open dokter.html: http://localhost:${PORT}/dokter.html\n`);
+  });
+}).catch(err => {
+  console.error('[SERVER] Gagal koneksi Supabase:', err.message);
+  process.exit(1);
 });
 
 const shutdown = (signal) => {

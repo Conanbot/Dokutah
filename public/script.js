@@ -4,7 +4,7 @@
 
 // Anime.js already loaded via CDN, use global anime
 
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = '/api';
 
 // === ANIME.JS UTILITIES ===
 // 3D card flip hover
