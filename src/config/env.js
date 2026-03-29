@@ -14,8 +14,6 @@
 const REQUIRED_VARS = [
   'SUPABASE_URL',
   'SUPABASE_ANON_KEY',
-  'SUPABASE_SERVICE_ROLE_KEY',
-  'GOOGLE_MAPS_API_KEY',
 ];
 
 // Database variables (optional if using Supabase)

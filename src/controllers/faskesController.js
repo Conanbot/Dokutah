@@ -112,4 +112,51 @@ const getAllJenis = async (req, res, next) => {
   }
 };
 
-module.exports = { getAll, getById, getNearby, getAllJenis };
+/**
+ * getByDokterKriteria — GET /api/faskes/by-dokter?kriteria=umum&lat=&lng=&radius=
+ * Faskes yang punya dokter jadwal matching kriteria spesialis, distance-sorted.
+ */
+const getByDokterKriteria = async (req, res, next) => {
+  try {
+    const { kriteria, lat, lng, radius = '10' } = req.query;
+    
+    if (!kriteria) {
+      return clientErrorResponse(res, 'Parameter kriteria (spesialis) wajib.', 400);
+    }
+
+    const userLocation = parseCoordinates(lat, lng);
+    if (!userLocation) {
+      return clientErrorResponse(res, 'Parameter lat dan lng tidak valid.', 400);
+    }
+
+    const paramKriteria = `%${kriteria}%`;
+    const { rows } = await query(`
+      SELECT DISTINCT f.* 
+      FROM faskes f
+      JOIN jadwal_praktik jp ON f.id_faskes = jp.id_faskes
+      JOIN dokter d ON jp.id_dokter = d.id_dokter
+      WHERE f.latitude IS NOT NULL AND f.longitude IS NOT NULL
+        AND d.spesialis ILIKE $1
+      ORDER BY f.nama ASC
+    `, [paramKriteria]);
+
+    const enriched = enrichWithDistance(rows, userLocation, parseFloat(radius));
+
+    successResponse(
+      res,
+      `${enriched.length} faskes dengan dokter ${kriteria} dalam radius ${radius} km.`,
+      enriched,
+      200,
+      { 
+        total: enriched.length, 
+        kriteria,
+        radius_km: parseFloat(radius), 
+        user_location: userLocation 
+      }
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { getAll, getById, getNearby, getAllJenis, getByDokterKriteria };

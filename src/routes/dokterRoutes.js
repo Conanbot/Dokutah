@@ -11,12 +11,13 @@
  */
 
 const { Router } = require('express');
-const { getAll, getById, getBySpesialis } = require('../controllers/dokterController');
+const { getAll, getById, getBySpesialis, getBpjsDokter, getByFaskesKriteria } = require('../controllers/dokterController');
 
 const router = Router();
 
-// URUTAN PENTING: route statis (/spesialis/:jenis) harus didaftarkan
-// SEBELUM route dinamis (/:id) agar tidak salah match.
+// URUTAN PENTING: route statis harus didaftarkan SEBELUM dinamis
+router.get('/bpjs',                getBpjsDokter);
+router.get('/by-faskes/:id_faskes', getByFaskesKriteria);
 router.get('/spesialis/:jenis', getBySpesialis);
 router.get('/',                 getAll);
 router.get('/:id',              getById);

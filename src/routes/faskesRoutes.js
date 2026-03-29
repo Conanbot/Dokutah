@@ -13,10 +13,11 @@
 
 const { Router } = require('express');
 const { validate, schemas } = require('../middleware/validator');
-const { getAll, getById, getNearby, getAllJenis } = require('../controllers/faskesController');
+const { getAll, getById, getNearby, getAllJenis, getByDokterKriteria } = require('../controllers/faskesController');
 
 const router = Router();
 
+router.get('/by-dokter', validate(schemas.koordinatSchema, 'query'), getByDokterKriteria);
 router.get('/jenis',   getAllJenis);
 router.get('/nearby',  validate(schemas.koordinatSchema, 'query'), getNearby);
 router.get('/',        getAll);
