@@ -189,6 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         // Add markers for all faskes types
+        if (!result.success || !result.data) throw new Error(result.message || 'API error');
         Object.entries(result.data).forEach(([jenis, places]) => {
           places.forEach(place => {
             const iconColor = {
