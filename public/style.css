@@ -129,15 +129,15 @@ body {
 }
 
 .theme-toggle, .theme-toggle-btn {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
-  color: white;
+  background: none;
+  border: none;
+  color: rgb(0, 0, 0);
   transition: all 0.3s ease;
 }
 
 [data-theme="dark"] .theme-toggle, [data-theme="dark"] .theme-toggle-btn {
-  background: rgba(0,0,0,0.3);
-  border-color: rgba(255,255,255,0.2);
+  background: none;
+  border-color: none;
   color: white;
 }
 
