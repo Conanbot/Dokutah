@@ -183,10 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Clear existing markers except user
         map.eachLayer(layer => {
-          if (layer !== mapContainer._layers[userMarker._leaflet_id]) {
-            if (layer instanceof L.Marker) map.removeLayer(layer);
-          }
-        });
+        if (layer instanceof L.Marker && layer !== userMarker) {
+          map.removeLayer(layer);
+        }
+      });
         
         // Add markers for all faskes types
         if (!result.success || !result.data) throw new Error(result.message || 'API error');
