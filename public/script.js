@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
               'puskesmas': 'orange', 'gigi': 'purple'
             }[jenis] || 'gray';
             
-            const marker = L.marker([place.geometry.location.lat, place.geometry.location.lng], {
+            const marker = L.marker([place.latitude, place.longitude], {
               icon: L.divIcon({
                 className: 'custom-marker',
                 html: `<div style="background: ${iconColor}; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>`,
@@ -204,10 +204,11 @@ document.addEventListener('DOMContentLoaded', () => {
               })
             }).addTo(map)
             .bindPopup(`
-              <b>${place.name}</b><br>
+              <b>${place.nama}</b><br>
               <small>${jenis.toUpperCase()}</small><br>
-              Rating: ${place.rating || 'N/A'} ⭐<br>
-              <a href="#" onclick="L.DomEvent.stopPropagation(); window.open('${place.url || ''}', '_blank')">Google Maps</a>
+              Rating: ${place.rating || '-'} ⭐<br>
+              Jarak: ${place.distance_km ? place.distance_km.toFixed(2) + ' km' : 'N/A'}<br>
+              Alamat: ${place.alamat || 'N/A'}<br>
             `);
           });
         });
