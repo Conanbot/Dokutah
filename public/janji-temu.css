@@ -73,6 +73,47 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     transform: scale(1.1);
 }
 
+/* Layanan Section Centering */
+#layanan {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+#layanan .container {
+    width: 100%;
+    height: 100%;
+}
+
+#layanan .row {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    margin: 0 auto;
+}
+
+#layanan .row > * {
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
+}
+#layanan .row a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    text-decoration: none;
+    color: inherit;
+    flex-direction: row;
+}
+.d-flex .name1, .d-flex .name2 {
+    display: flex !important;
+    justify-content: center;
+}
+
 /* Scroll Animations */
 .scroll-anime { opacity: 0; transform: translateY(40px); }
 
