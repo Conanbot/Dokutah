@@ -34,18 +34,27 @@ app.use('/api', apiRoutes);
 
 app.use(errorHandler);
 
+const { connectDB } = require('./src/config/db');
+
 const server = http.createServer(app);
-connectSupabase().then(() => {
-  server.listen(PORT, () => {
-    console.log(`\n✅ Server running at http://localhost:${PORT}`);
-    console.log(`📁 Static files from /public`);
-    console.log(`🌐 APIs at http://localhost:${PORT}/api`);
-    console.log(`🔗 Open dokter.html: http://localhost:${PORT}/dokter.html\n`);
-  });
-}).catch(err => {
-  console.error('[SERVER] Gagal koneksi Supabase:', err.message);
-  process.exit(1);
-});
+
+const startServer = async () => {
+  try {
+    await connectSupabase();
+    await connectDB();
+    server.listen(PORT, () => {
+      console.log(`\n✅ Server running at http://localhost:${PORT}`);
+      console.log(`📁 Static files from /public`);
+      console.log(`🌐 APIs at http://localhost:${PORT}/api`);
+      console.log(`🔗 Open dokter.html: http://localhost:${PORT}/dokter.html\n`);
+    });
+  } catch (err) {
+    console.error('[SERVER] Gagal start:', err.message);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 const shutdown = (signal) => {
   console.log(`\n[SERVER] Received ${signal}, shutting down...`);
@@ -56,5 +65,5 @@ const shutdown = (signal) => {
 };
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGINT',  () => shutdown('SIGINT'));
 
