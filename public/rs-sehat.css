@@ -59,5 +59,19 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 .article-card { transition: transform 0.3s; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-radius: 10px; overflow: hidden; }
 .article-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
 
+.fa-brands.fa-x-twitter {
+    font-size: 1.5rem !important;
+    color: #ececec !important;
+}
+
+.fa-brands.fa-x-twitter:hover {
+    color: #1da1f2 !important;
+    transform: scale(1.1);
+}
+
 /* Scroll Animations */
 .scroll-anime { opacity: 0; transform: translateY(40px); }
+
+#rs-sehat-map .leaflet-marker-icon.custom-marker {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
