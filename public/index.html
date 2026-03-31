@@ -1,251 +1,258 @@
 <!DOCTYPE html>
-<html lang="id" data-theme="light">
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RS Modern Indonesia - Layanan Kesehatan Terpercaya</title>
-  <!-- Bootstrap 5 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Font Awesome -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-  <!-- Anime.js -->
-  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dokutah - Pelayanan Medis Terpadu</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="rs-sehat.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg shadow-sm fixed-top">
-    <div class="container">
-      <a class="navbar-brand fw-bold fs-3" href="/index.html">
-        <i class="fas fa-hospital text-primary"></i> RS Modern
-      </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link active" href="/index.html">Beranda</a></li>
-          <li class="nav-item"><a class="nav-link" href="/layanan.html">Layanan</a></li>
-          <li class="nav-item"><a class="nav-link" href="/dokter.html">Dokter</a></li>
-          <li class="nav-item"><a class="nav-link" href="/kontak.html">Kontak</a></li>
-          <li class="nav-item ms-2">
-            <button id="themeToggle" class="theme-toggle" title="Toggle Dark/Light">
-              <i class="fas fa-moon"></i>
+
+    <div class="bg-light py-2 d-none d-lg-block">
+        <div class="container d-flex justify-content-between">
+            <div><i class="fas fa-phone-alt me-2 text-primary"></i> Emergency: 1-500-123</div>
+            <div>
+                <a href="#" class="text-decoration-none text-dark me-3"><i class="fas fa-envelope me-1"></i> info@rs-sehat.com</a>
+                <a href="#" class="text-decoration-none text-dark">ID | EN</a>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="fas fa-hospital me-2"></i>DOKUTAH</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
             </button>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Hero -->
-  <section class="hero-section d-flex align-items-center min-vh-100">
-    <div class="container">
-      <div class="row align-items-center">
-        <div class="col-lg-6">
-          <h1 class="display-3 fw-bold mb-4 anime-fade-up">
-<i class="fas fa-heartbeat text-white me-3"></i>
-            Layanan Kesehatan Terpercaya
-          </h1>
-          <p class="lead fs-4 mb-4 opacity-90 anime-fade-up" style="animation-delay: 0.2s;">
-            RS Modern Indonesia menyediakan pelayanan medis lengkap dengan dokter spesialis berpengalaman dan fasilitas modern.
-          </p>
-          <div class="d-flex gap-3 flex-wrap anime-fade-up" style="animation-delay: 0.4s;">
-            <a href="/dokter.html" class="btn btn-primary btn-lg px-5 py-3">
-              <i class="fas fa-user-md me-2"></i>Cari Dokter
-            </a>
-            <a href="/layanan.html" class="btn btn-white btn-lg px-5 py-3 hover-no-transform">
-              <i class="fas fa-list me-2"></i>Lihat Layanan
-            </a>
-          </div>
-        </div>
-        <div class="col-lg-6 text-center anime-slide-left" style="animation-delay: 0.6s;">
-          <i class="fas fa-hospital fa-8x text-primary opacity-75"></i>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Services Preview -->
-  <section class="py-5">
-    <div class="container">
-      <div class="text-center mb-5">
-        <h2 class="display-5 fw-bold mb-3">Layanan Unggulan Kami</h2>
-        <p class="lead text-muted">Fasilitas lengkap untuk kesehatan keluarga Anda</p>
-      </div>
-<div class="row g-4">
-        <div class="col-lg-4 col-md-6 perspective">
-          <div class="large grid centered square-grid">
-            <div class="square draggable doctor-card">
-              <div class="face front">
-                <i class="fas fa-stethoscope fa-3x text-primary mb-3" style="font-size: 4rem; opacity: 0.8;"></i>
-                <h3>Konsultasi Dokter</h3>
-                <p class="specialty">Telemedicine</p>
-              </div>
-              <div class="face back">
-                <h4>24/7 Available</h4>
-                <p>Konsultasi dokter spesialis melalui video call atau langsung.</p>
-              </div>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link active" href="#">Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#layanan">Layanan</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#dokter">Dokter</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#artikel">Artikel</a></li>
+                </ul>
+                <a href="janji-temu.html" class="btn btn-primary ms-3 rounded-pill px-4 fw-bold">Buat Janji Temu</a>
             </div>
-          </div>
         </div>
-        <div class="col-lg-4 col-md-6 perspective">
-          <div class="large grid centered square-grid">
-            <div class="square draggable doctor-card">
-              <div class="face front">
-                <i class="fas fa-ambulance fa-3x text-success mb-3" style="font-size: 4rem; opacity: 0.8;"></i>
-                <h3>IGD 24 Jam</h3>
-                <p class="specialty">Emergency</p>
-              </div>
-              <div class="face back">
-                <h4>Siaga Penuh</h4>
-                <p>Layanan gawat darurat dengan tim medis lengkap.</p>
-              </div>
+    </nav>
+
+    <header>
+        <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                <div class="carousel-item active" style="background-image: url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=2053&auto=format&fit=crop');">
+                    <div class="carousel-overlay"></div>
+                    <div class="container h-100 position-relative">
+                        <div class="carousel-caption">
+                            <h1 class="display-3 fw-bold anime-hero">Pusat Layanan Kesehatan Unggulan</h1>
+                            <p class="lead anime-hero">Memberikan perawatan medis berstandar internasional dengan teknologi terkini.</p>
+                            <a href="janji-temu.html" class="btn btn-warning btn-lg rounded-pill mt-3 fw-bold anime-hero">Pesan ke Dokter via Website</a>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-        <div class="col-lg-4 col-md-6 perspective">
-          <div class="large grid centered square-grid">
-            <div class="square draggable doctor-card">
-              <div class="face front">
-                <i class="fas fa-pills fa-3x text-warning mb-3" style="font-size: 4rem; opacity: 0.8;"></i>
-                <h3>Apotek</h3>
-                <p class="specialty">Rawat Jalan</p>
-              </div>
-              <div class="face back">
-                <h4>Obat Lengkap</h4>
-                <p>Resep digital dan pengantaran gratis.</p>
-              </div>
+    </header>
+
+    <section class="quick-menu-container container mb-5">
+        <div class="row g-3">
+            <div class="col-md-3 col-6"><a href="janji-temu.html" class="quick-card anime-quick"><i class="fas fa-calendar-check"></i><h6 class="fw-bold">Buat Janji Temu</h6></a></div>
+            <div class="col-md-3 col-6"><a href="#dokter" class="quick-card anime-quick"><i class="fas fa-user-md"></i><h6 class="fw-bold">Jadwal Dokter</h6></a></div>
+            <div class="col-md-3 col-6"><a href="#layanan" class="quick-card anime-quick"><i class="fas fa-notes-medical"></i><h6 class="fw-bold">Medical Check Up</h6></a></div>
+            <div class="col-md-3 col-6"><a href="#" class="quick-card anime-quick"><i class="fas fa-ambulance"></i><h6 class="fw-bold">Gawat Darurat</h6></a></div>
+        </div>
+    </section>
+
+    <section id="layanan" class="py-5 bg-white">
+        <div class="container">
+            <h2 class="section-title text-center scroll-anime">Fasilitas & Layanan Unggulan</h2>
+            <p class="text-center text-muted mb-5 scroll-anime">Kami menyediakan fasilitas medis komprehensif untuk mendiagnosis dan merawat Anda secara presisi.</p>
+            
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6 scroll-anime">
+                    <div class="d-flex align-items-start p-3 border rounded bg-light h-100">
+                        <i class="fas fa-heartbeat fa-2x text-primary me-3 mt-1"></i>
+                        <div>
+                            <h5 class="fw-bold">Pusat Jantung Terpadu</h5>
+                            <p class="text-muted small">Penanganan komprehensif penyakit jantung dengan teknologi kateterisasi modern.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 scroll-anime">
+                    <div class="d-flex align-items-start p-3 border rounded bg-light h-100">
+                        <i class="fas fa-x-ray fa-2x text-primary me-3 mt-1"></i>
+                        <div>
+                            <h5 class="fw-bold">Radiologi & MRI 3 Tesla</h5>
+                            <p class="text-muted small">Pencitraan diagnostik detail tinggi untuk akurasi medis yang lebih baik.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 scroll-anime">
+                    <div class="d-flex align-items-start p-3 border rounded bg-light h-100">
+                        <i class="fas fa-flask fa-2x text-primary me-3 mt-1"></i>
+                        <div>
+                            <h5 class="fw-bold">Laboratorium 24 Jam</h5>
+                            <p class="text-muted small">Layanan patologi klinik dan anatomi dengan hasil cepat dan akurat.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Stats -->
-  <section class="py-5 bg-primary text-white">
-    <div class="container">
-      <div class="row text-center g-4">
-        <div class="col-md-3">
-          <div class="h2 mb-1">100+</div>
-          <div>Dokter Spesialis</div>
-        </div>
-        <div class="col-md-3">
-          <div class="h2 mb-1">24/7</div>
-          <div>Layanan IGD</div>
-        </div>
-        <div class="col-md-3">
-          <div class="h2 mb-1">50K+</div>
-          <div>Pasien Dilayani</div>
-        </div>
-        <div class="col-md-3">
-          <div class="h2 mb-1">99%</div>
-          <div>Kepuasan Pasien</div>
-        </div>
-      </div>
-    </div>
-  </section>
+<section id="dokter" class="py-5 bg-light">
+        <div class="container">
+            <h2 class="section-title text-center scroll-anime">Temui Tim Dokter Spesialis Kami</h2>
+            <p class="text-center text-muted mb-5 scroll-anime">Para ahli medis kami yang berkomitmen memberikan perawatan terbaik.</p>
+            <div class="row g-4 mt-2">
+                <div class="col-md-6 col-lg-3 doc-card-container scroll-anime anime-doc">
+                    <div class="doc-card">
+                        <div class="doc-image-wrapper">
+                            <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=2070&auto=format&fit=crop" alt="Dr. Andi Wijaya">
+                        </div>
+                        <div class="doc-details">
+                            <div class="doc-specialty">Internal Medicine</div>
+                            <div class="doc-name">Dr. Andi Wijaya</div>
+                        </div>
+                        <div class="doc-actions">
+                            <a href="janji-temu.html" class="btn doc-btn-booking w-100">Buat Janji</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 doc-card-container scroll-anime anime-doc">
+                    <div class="doc-card">
+                        <div class="doc-image-wrapper">
+                            <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=2070&auto=format&fit=crop" alt="Dr. Sarah Larasati">
+                        </div>
+                        <div class="doc-details">
+                            <div class="doc-specialty">Pediatrics</div>
+                            <div class="doc-name">Dr. Sarah Larasati</div>
+                        </div>
+                        <div class="doc-actions">
+                            <a href="janji-temu.html" class="btn doc-btn-booking w-100">Buat Janji</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 doc-card-container scroll-anime anime-doc">
+                    <div class="doc-card">
+                        <div class="doc-image-wrapper">
+                            <img src="https://images.unsplash.com/photo-1594824436998-dded0bce999c?q=80&w=2070&auto=format&fit=crop" alt="Dr. Budi Santoso">
+                        </div>
+                        <div class="doc-details">
+                            <div class="doc-specialty">Cardiology</div>
+                            <div class="doc-name">Dr. Budi Santoso</div>
+                        </div>
+                        <div class="doc-actions">
+                            <a href="janji-temu.html" class="btn doc-btn-booking w-100">Buat Janji</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 doc-card-container scroll-anime anime-doc">
+                    <div class="doc-card">
+                        <div class="doc-image-wrapper">
+                            <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=2064&auto=format&fit=crop" alt="Dr. Ratna Dewi">
+                        </div>
+                        <div class="doc-details">
+                            <div class="doc-specialty">Neurology</div>
+                            <div class="doc-name">Dr. Ratna Dewi</div>
+                        </div>
+                        <div class="doc-actions">
+                            <a href="janji-temu.html" class="btn doc-btn-booking w-100">Buat Janji</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-4 scroll-anime">
+                <a href="#" class="btn btn-link text-decoration-none fw-bold">Lihat Semua Dokter <i class="fas fa-arrow-right"></i></a>
+            </div>
 
-  <!-- CTA -->
-  <section class="py-5">
-    <div class="container text-center">
-      <h2 class="display-5 fw-bold mb-4">Siap Periksa Kesehatan?</h2>
-      <p class="lead mb-4">Mulai sekarang dengan dokter terbaik dekat lokasi Anda</p>
-      <a href="/dokter.html" class="btn btn-primary btn-lg px-5 py-3">
-        <i class="fas fa-search-location me-2"></i>Cari Dokter Sekarang
-      </a>
-    </div>
-  </section>
+            <!-- Map Section Added -->
+            <section class="map-section py-5 scroll-anime mt-5">
+                <div class="text-center mb-5">
+                    <h3 class="h2 fw-bold mb-3">
+                        <i class="fas fa-map-marker-alt text-info me-3"></i>
+                        Lokasi Faskes Terdekat
+                    </h3>
+                    <p class="lead text-muted">RS, Klinik, Puskesmas & Apotek di sekitar Anda</p>
+                </div>
+                <div id="rs-sehat-map" style="height: 400px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden;"></div>
+            </section>
+        </div>
+    </section>
 
-  <!-- Footer -->
-  <footer class="bg-dark text-white py-5">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-4 mb-4">
-          <h5><i class="fas fa-hospital me-2 text-primary"></i>RS Modern Indonesia</h5>
-          <p>Layanan kesehatan berkualitas tinggi dengan teknologi modern dan dokter berpengalaman.</p>
+    <section id="artikel" class="py-5 bg-white">
+        <div class="container">
+            <h2 class="section-title text-center scroll-anime">Edukasi & Berita Kesehatan</h2>
+            <div class="row g-4 mt-2">
+                <div class="col-md-4 scroll-anime">
+                    <div class="card h-100 article-card border-0 bg-light">
+                        <img src="https://images.unsplash.com/photo-1505576399279-565b52d4ac71?q=80&w=1974&auto=format&fit=crop" class="card-img-top" alt="Artikel" style="height: 200px; object-fit: cover; border-top-left-radius: 10px; border-top-right-radius: 10px;">
+                        <div class="card-body p-4">
+                            <small class="text-primary fw-bold">Pola Hidup</small> • <small class="text-muted">31 Mar 2026</small>
+                            <h5 class="card-title fw-bold mt-2">Pentingnya Cek Kesehatan Rutin di Usia Produktif</h5>
+                            <p class="card-text text-muted small">Mencegah lebih baik daripada mengobati. Ketahui panel pemeriksaan dasar.</p>
+                            <a href="#" class="text-decoration-none fw-bold">Baca Artikel</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 scroll-anime">
+                    <div class="card h-100 article-card border-0 bg-light">
+                        <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=2053&auto=format&fit=crop" class="card-img-top" alt="Artikel" style="height: 200px; object-fit: cover; border-top-left-radius: 10px; border-top-right-radius: 10px;">
+                        <div class="card-body p-4">
+                            <small class="text-primary fw-bold">Gizi</small> • <small class="text-muted">28 Mar 2026</small>
+                            <h5 class="card-title fw-bold mt-2">5 Makanan Super untuk Menjaga Tekanan Darah</h5>
+                            <p class="card-text text-muted small">Jaga kesehatan jantung Anda dengan mengonsumsi buah dan sayur.</p>
+                            <a href="#" class="text-decoration-none fw-bold">Baca Artikel</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 scroll-anime">
+                    <div class="card h-100 article-card border-0 bg-light">
+                        <img src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=2030&auto=format&fit=crop" class="card-img-top" alt="Artikel" style="height: 200px; object-fit: cover; border-top-left-radius: 10px; border-top-right-radius: 10px;">
+                        <div class="card-body p-4">
+                            <small class="text-primary fw-bold">Inovasi Medis</small> • <small class="text-muted">20 Mar 2026</small>
+                            <h5 class="card-title fw-bold mt-2">Kemudahan Pesan Jadwal Dokter via Website</h5>
+                            <p class="card-text text-muted small">Inovasi terbaru RS Sehat memungkinkan pasien mendaftar tanpa antri.</p>
+                            <a href="#" class="text-decoration-none fw-bold">Baca Artikel</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="col-lg-2 col-md-6 mb-4">
-          <h6>Layanan</h6>
-          <ul class="list-unstyled">
-            <li><a href="/dokter.html" class="text-white text-decoration-none">Dokter</a></li>
-            <li><a href="/layanan.html" class="text-white text-decoration-none">Layanan</a></li>
-            <li><a href="#" class="text-white text-decoration-none">IGD 24 Jam</a></li>
-          </ul>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-4">
-          <h6>Kontak</h6>
-          <ul class="list-unstyled">
-            <li><i class="fas fa-phone me-2"></i>(024) 1234-5678</li>
-            <li><i class="fas fa-envelope me-2"></i>info@rsmodern.id</li>
-            <li><i class="fas fa-map-marker-alt me-2"></i>Jl. RS No.1, Salatiga</li>
-          </ul>
-        </div>
-        <div class="col-lg-3 mb-4">
-          <h6>Tautan Cepat</h6>
-          <ul class="list-unstyled">
-            <li><a href="#" class="text-white text-decoration-none">Pendaftaran Online</a></li>
-            <li><a href="/kontak.html" class="text-white text-decoration-none">Hubungi Kami</a></li>
-          </ul>
-        </div>
-      </div>
-      <hr>
-      <div class="text-center">
-        <p>&copy; 2024 RS Modern Indonesia. Semua hak dilindungi.</p>
-      </div>
-    </div>
-  </footer>
+    </section>
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // Theme Toggle
-    const themeToggle = document.getElementById('themeToggle');
-    const themeToggleFooter = document.getElementById('themeToggleFooter');
-    const html = document.documentElement;
-    
-    const setTheme = (theme) => {
-      html.setAttribute('data-theme', theme);
-      localStorage.setItem('theme', theme);
-      themeToggle.querySelector('i').className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-    };
-    
-    const initTheme = () => {
-      const savedTheme = localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      setTheme(savedTheme);
-    };
-    
-    themeToggle?.addEventListener('click', () => {
-      const current = html.getAttribute('data-theme');
-      setTheme(current === 'dark' ? 'light' : 'dark');
-    });
-    
-    themeToggleFooter?.addEventListener('click', () => {
-      const current = html.getAttribute('data-theme');
-      setTheme(current === 'dark' ? 'light' : 'dark');
-    });
-    
-    // Anime animations
-    anime.timeline({loop: false})
-      .add({
-        targets: '.anime-fade-up',
-        translateY: [50, 0],
-        opacity: [0, 1],
-        duration: 800,
-        delay: anime.stagger(200),
-        easing: 'easeOutExpo'
-      })
-      .add({
-        targets: '.anime-slide-left',
-        translateX: [-50, 0],
-        opacity: [0, 1],
-        duration: 800,
-        offset: '-=300',
-        easing: 'easeOutExpo'
-      });
-    
-    initTheme();
-  </script>
+    <footer class="bg-dark text-white pt-5 pb-3 mt-auto">
+        <div class="container">
+            <div class="row text-center text-md-start">
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <h5 class="text-uppercase mb-4 fw-bold text-warning">RS SEHAT</h5>
+                    <p>Melayani dengan sepenuh hati demi kesembuhan dan kenyamanan Anda. Hadir dengan inovasi digital untuk memudahkan akses kesehatan.</p>
+                </div>
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <h5 class="text-uppercase mb-4 fw-bold text-warning">Hubungi Kami</h5>
+                    <p><i class="fas fa-home me-3"></i> Jl. Pemuda No. 8, Ambarawa</p>
+                    <p><i class="fas fa-envelope me-3"></i> info@rs-sehat.com</p>
+                    <p><i class="fas fa-phone me-3"></i> +62 812 3456 7890</p>
+                </div>
+                <div class="col-md-12 col-lg-4 mb-4 text-center text-lg-start">
+                    <h5 class="text-uppercase mb-4 fw-bold text-warning">Ikuti Kami</h5>
+                    <a href="#" class="text-white me-4 fs-4"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-white me-4 fs-4"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-white me-4 fs-4"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+            <hr class="mb-4">
+            <div class="text-center">
+                <p>&copy; 2026 RS Sehat. Hak Cipta Dilindungi.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="rs-sehat.js"></script>
 </body>
 </html>
