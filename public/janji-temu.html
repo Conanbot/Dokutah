@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dokutah - Pelayanan Medis Terpadu</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="janji-temu.css">
+
+</head>
+<body>
+
+    <div class="bg-light py-2 d-none d-lg-block">
+        <div class="container d-flex justify-content-between">
+            <div><i class="fas fa-phone-alt me-2 text-primary"></i> Emergency: 1-500-123</div>
+            <div>
+                <a href="#" class="text-decoration-none text-dark me-3"><i class="fas fa-envelope me-1"></i> info@dokutah.com</a>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="fas fa-hospital me-2"></i>DOKUTAH</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link active" href="#">Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#layanan">Layanan</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#dokter">Dokter</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#artikel">Artikel</a></li>
+                </ul>
+                <a href="janji-temu.html" class="btn btn-primary ms-3 rounded-pill px-4 fw-bold">Buat Janji Temu</a>
+            </div>
+        </div>
+    </nav>
+
+    <header>
+        <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                <div class="carousel-item active" style="background-image: url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=2053&auto=format&fit=crop');">
+                    <div class="carousel-overlay"></div>
+                    <div class="container h-100 position-relative">
+                        <div class="carousel-caption">
+                            <h1 class="display-3 fw-bold anime-hero">Pemesanan Dokter</h1>
+                            <p class="lead anime-hero">Pesan dokter sekarang melalui BPJS atau Non-BPJS</p>
+                            <a href="#layanan" class="btn btn-warning btn-lg rounded-pill mt-3 fw-bold anime-hero">Pesan ke Dokter via Website</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="layanan" class="py-5 bg-white">
+        <div class="container">
+            <h2 class="section-title text-center scroll-anime">Jalur Pemesanan Dokter</h2>
+            <p class="text-center text-muted mb-5 scroll-anime"></p>
+            
+            <div class="row g-4 justify-content-center">
+                <a href="dokterbpjs.html" class="text-decoration-none">
+                <div class="col-lg-4 col-md-6 scroll-anime">
+                    <div class="d-flex align-items-start p-3 border rounded bg-light h-100">
+                        <i class="fas fa-heartbeat fa-2x text-primary me-3 mt-1"></i>
+                        <div>
+                            <h5 class="fw-bold">Jalur BPJS</h5>
+                            <p class="text-muted small">Pendaftaran dokter melalui BPJS</p>
+                        </div>
+                    </div>
+                </div>
+                </a>
+                <a href="dokternonbpjs.html" class="text-decoration-none">
+                <div class="col-lg-4 col-md-6 scroll-anime">
+                    <div class="d-flex align-items-start p-3 border rounded bg-light h-100">
+                        <i class="fas fa-x-ray fa-2x text-primary me-3 mt-1"></i>
+                        <div>
+                            <h5 class="fw-bold">Jalur Non-BPJS</h5>
+                            <p class="text-muted small">Layanan medis berkualitas tinggi untuk pasien yang tidak memiliki asuransi kesehatan.</p>
+                        </div>
+                    </div>
+                </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-dark text-white pt-5 pb-3 mt-auto">
+        <div class="container">
+            <div class="row text-center text-md-start">
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <h5 class="text-uppercase mb-4 fw-bold text-warning">RS SEHAT</h5>
+                    <p>Melayani dengan sepenuh hati demi kesembuhan dan kenyamanan Anda. Hadir dengan inovasi digital untuk memudahkan akses kesehatan.</p>
+                </div>
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <h5 class="text-uppercase mb-4 fw-bold text-warning">Hubungi Kami</h5>
+                    <p><i class="fas fa-home me-3"></i> Jl. Pemuda No. 8, Ambarawa</p>
+                    <p><i class="fas fa-envelope me-3"></i> info@dokutah.com</p>
+                    <p><i class="fas fa-phone me-3"></i> +62 812 3456 7890</p>
+                </div>
+                <div class="col-md-12 col-lg-4 mb-4 text-center text-lg-start">
+                    <h5 class="text-uppercase mb-4 fw-bold text-warning">Ikuti Kami</h5>
+                    <a href="#" class="text-white me-4 fs-4"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-white me-4 fs-4"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="#" class="text-white me-4 fs-4"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+            <hr class="mb-4">
+            <div class="text-center">
+                <p>&copy; 2026 Dokutah. Hak Cipta Dilindungi.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="rs-sehat.js"></script>
+</body>
+</html>
