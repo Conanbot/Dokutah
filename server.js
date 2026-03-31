@@ -41,19 +41,24 @@ const server = http.createServer(app);
 const startServer = async () => {
   try {
     await connectSupabase();
-    await connectDB();
-    server.listen(PORT, () => {
-      console.log(`\n✅ Server running at http://localhost:${PORT}`);
-      console.log(`📁 Static files from /public`);
-      console.log(`🌐 APIs at http://localhost:${PORT}/api`);
-      console.log(`🔗 Open dokter.html: http://localhost:${PORT}/dokter.html\n`);
-    });
   } catch (err) {
-    console.error('[SERVER] Gagal start:', err.message);
+    console.error('[SERVER] Gagal koneksi Supabase:', err.message);
     process.exit(1);
   }
-};
 
+  try {
+    await connectDB();
+  } catch (err) {
+    console.warn('[DB] Direct PostgreSQL skip — server tetap jalan:', err.message);
+  }
+
+  server.listen(PORT, () => {
+    console.log(`\n✅ Server running at http://localhost:${PORT}`);
+    console.log(`📁 Static files from /public`);
+    console.log(`🌐 APIs at http://localhost:${PORT}/api`);
+    console.log(`🔗 Open dokter.html: http://localhost:${PORT}/dokter.html\n`);
+  });
+};
 startServer();
 
 const shutdown = (signal) => {
