@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dokter BPJS - Dokutah</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="rs-sehat.css">
+    <style>
+        .breadcrumb-section {
+            background: linear-gradient(135deg, #006699 0%, #0088bb 100%);
+            padding: 30px 0;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .breadcrumb-section h1 {
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .filter-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .filter-section .form-label {
+            font-weight: 600;
+            color: #006699;
+            margin-bottom: 8px;
+        }
+        
+        .doctor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .doctor-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .doctor-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+        }
+        
+        .doctor-image {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(135deg, #006699 0%, #0088bb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            overflow: hidden;
+        }
+        
+        .doctor-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .doctor-info {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .doctor-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #006699;
+            margin-bottom: 8px;
+        }
+        
+        .doctor-specialty {
+            color: #e0a800;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        
+        .doctor-details {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 15px;
+            flex-grow: 1;
+        }
+        
+        .doctor-details p {
+            margin-bottom: 8px;
+        }
+        
+        .doctor-details i {
+            color: #006699;
+            width: 20px;
+            margin-right: 8px;
+        }
+        
+        .doctor-actions {
+            display: flex;
+            gap: 10px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        .doctor-actions button {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .btn-book {
+            background: #006699;
+            color: white;
+        }
+        
+        .btn-book:hover {
+            background: #004a70;
+            color: white;
+        }
+        
+        .btn-detail {
+            background: #f0f0f0;
+            color: #006699;
+        }
+        
+        .btn-detail:hover {
+            background: #e0e0e0;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #006699;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .no-doctors {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .no-doctors i {
+            font-size: 3rem;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .rating {
+            color: #ffc107;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-light py-2 d-none d-lg-block">
+        <div class="container d-flex justify-content-between">
+            <div><i class="fas fa-phone-alt me-2 text-primary"></i> Emergency: 1-500-123</div>
+            <div>
+                <a href="#" class="text-decoration-none text-dark me-3"><i class="fas fa-envelope me-1"></i> info@dokutah.com</a>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="janji-temu.html"><i class="fas fa-hospital me-2"></i>DOKUTAH</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="janji-temu.html">Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="janji-temu.html#layanan">Layanan</a></li>
+                    <li class="nav-item"><a class="nav-link" href="janji-temu.html#dokter">Dokter</a></li>
+                    <li class="nav-item"><a class="nav-link" href="janji-temu.html#artikel">Artikel</a></li>
+                </ul>
+                <a href="janji-temu.html" class="btn btn-primary ms-3 rounded-pill px-4 fw-bold">Buat Janji Temu</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="breadcrumb-section">
+        <div class="container">
+            <h1><i class="fas fa-heart me-2"></i>Pilih Dokter BPJS</h1>
+            <p class="text-white-50">Daftar dokter yang menerima peserta BPJS</p>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <div class="filter-section">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Cari Rujukan Dokter</label>
+                    <input type="text" class="form-control" id="searchDoctor" placeholder="Ketik nama dokter...">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Filter Spesialis</label>
+                    <select class="form-select" id="filterSpecialty">
+                        <option value="">Semua Spesialis</option>
+                        <option value="umum">Dokter Umum</option>
+                        <option value="gigi">Dokter Gigi</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="doctorContainer" class="doctor-grid">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Memuat daftar dokter...</p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white pt-5 pb-3 mt-auto">
+        <div class="container">
+            <div class="row text-center text-md-start">
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <h5 class="text-uppercase mb-4 fw-bold text-warning">RS SEHAT</h5>
+                    <p>Melayani dengan sepenuh hati demi kesembuhan dan kenyamanan Anda. Hadir dengan inovasi digital untuk memudahkan akses kesehatan.</p>
+                </div>
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <h5 class="text-uppercase mb-4 fw-bold text-warning">Hubungi Kami</h5>
+                    <p><i class="fas fa-home me-3"></i> Jl. Pemuda No. 8, Ambarawa</p>
+                    <p><i class="fas fa-envelope me-3"></i> info@dokutah.com</p>
+                    <p><i class="fas fa-phone me-3"></i> +62 812 3456 7890</p>
+                </div>
+                <div class="col-md-12 col-lg-4 mb-4 text-center text-lg-start">
+                    <h5 class="text-uppercase mb-4 fw-bold text-warning">Ikuti Kami</h5>
+                    <a href="#" class="text-white me-4 fs-4"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-white me-4 fs-4"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="#" class="text-white me-4 fs-4"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+            <hr class="mb-4">
+            <div class="text-center">
+                <p>&copy; 2026 Dokutah. Hak Cipta Dilindungi.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let allDoctors = [];
+
+        async function loadDoctors() {
+            try {
+                const response = await fetch('/api/dokter/bpjs');
+                const data = await response.json();
+                allDoctors = data.data || [];
+                displayDoctors(allDoctors);
+            } catch (error) {
+                console.error('Error loading doctors:', error);
+                document.getElementById('doctorContainer').innerHTML = `
+                    <div class="no-doctors">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h5>Gagal memuat data dokter</h5>
+                        <p>Silakan refresh halaman untuk mencoba lagi</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayDoctors(doctors) {
+            const container = document.getElementById('doctorContainer');
+            
+            if (doctors.length === 0) {
+                container.innerHTML = `
+                    <div class="no-doctors" style="grid-column: 1 / -1;">
+                        <i class="fas fa-search"></i>
+                        <h5>Dokter tidak ditemukan</h5>
+                        <p>Coba ubah filter pencarian Anda</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = doctors.map(doctor => `
+                <div class="doctor-card">
+                    <div class="doctor-image">
+                        ${doctor.foto_url ? `<img src="${doctor.foto_url}" alt="${doctor.nama_dokter}">` : `<i class="fas fa-user-md"></i>`}
+                    </div>
+                    <div class="doctor-info">
+                        <div class="doctor-name">${doctor.nama_dokter}</div>
+                        <div class="doctor-specialty">${doctor.spesialis}</div>
+                        ${doctor.rating ? `<div class="rating"><i class="fas fa-star"></i> ${doctor.rating}/5</div>` : ''}
+                        <div class="doctor-details">
+                            ${doctor.no_hp ? `<p><i class="fas fa-phone"></i> ${doctor.no_hp}</p>` : ''}
+                            ${doctor.alamat_praktik ? `<p><i class="fas fa-map-marker-alt"></i> ${doctor.alamat_praktik}</p>` : ''}
+                            ${doctor.jadwal && doctor.jadwal.length > 0 ? `<p><i class="fas fa-clock"></i> ${doctor.jadwal.length} hari praktik</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="doctor-actions">
+                        <button class="btn-book" onclick="bookDoctor(${doctor.id_dokter}, '${doctor.nama_dokter}')">
+                            <i class="fas fa-calendar-check me-2"></i>Pesan
+                        </button>
+                        <button class="btn-detail" onclick="viewDetail(${doctor.id_dokter})">
+                            <i class="fas fa-info-circle me-2"></i>Detail
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterDoctors() {
+            const searchTerm = document.getElementById('searchDoctor').value.toLowerCase();
+            const specialty = document.getElementById('filterSpecialty').value.toLowerCase();
+
+            const filtered = allDoctors.filter(doctor => {
+                const nameMatch = doctor.nama_dokter.toLowerCase().includes(searchTerm);
+                const specialtyMatch = specialty === '' || doctor.spesialis.toLowerCase().includes(specialty);
+                return nameMatch && specialtyMatch;
+            });
+
+            displayDoctors(filtered);
+        }
+
+        function bookDoctor(doctorId, doctorName) {
+            localStorage.setItem('selectedDoctor', JSON.stringify({id: doctorId, name: doctorName, type: 'bpjs'}));
+            alert(`Anda memilih: ${doctorName}\n\nSilakan melanjutkan ke halaman pemesanan.`);
+            // In a real app, you would navigate to a booking form page
+            // window.location.href = `booking.html?doctor=${doctorId}&type=bpjs`;
+        }
+
+        function viewDetail(doctorId) {
+            const doctor = allDoctors.find(d => d.id_dokter === doctorId);
+            if (doctor) {
+                alert(`Detail Dokter: ${doctor.nama_dokter}\nSpesialis: ${doctor.spesialis}\nRating: ${doctor.rating || 'Belum ada'}`);
+                // In a real app, you would navigate to a detail page
+                // window.location.href = `doctor-detail.html?id=${doctorId}`;
+            }
+        }
+
+        // Filter listeners
+        document.getElementById('searchDoctor').addEventListener('input', filterDoctors);
+        document.getElementById('filterSpecialty').addEventListener('change', filterDoctors);
+
+        // Load doctors on page load
+        loadDoctors();
+    </script>
+</body>
+</html>
