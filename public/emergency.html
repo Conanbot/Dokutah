@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layanan Darurat - Dokutah</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="rs-sehat.css">
+    <style>
+        .emergency-header {
+            background: linear-gradient(135deg, #dc3545 0%, #ff6b6b 100%);
+            padding: 40px 0;
+            color: white;
+            margin-bottom: 40px;
+            animation: pulse-header 2s infinite;
+        }
+        
+        @keyframes pulse-header {
+            0%, 100% { box-shadow: 0 0 20px rgba(220, 53, 69, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(220, 53, 69, 0.6); }
+        }
+        
+        .emergency-header h1 {
+            font-weight: 700;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 49%, 100% { opacity: 1; }
+            50%, 99% { opacity: 0.8; }
+        }
+        
+        .emergency-number {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .emergency-number .big-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 3px;
+        }
+        
+        .emergency-number p {
+            margin: 0;
+            font-size: 0.95rem;
+        }
+        
+        .breadcrumb-section {
+            background: #f8f9fa;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        .emergency-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .emergency-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border-left: 5px solid #dc3545;
+            position: relative;
+        }
+        
+        .emergency-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+        }
+        
+        .emergency-card-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #dc3545 0%, #ff6b6b 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .emergency-card h5 {
+            color: #dc3545;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .emergency-card p {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+        }
+        
+        .emergency-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .emergency-info i {
+            color: #dc3545;
+            width: 20px;
+            margin-right: 10px;
+        }
+        
+        .call-button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .call-button:hover {
+            background: #c82333;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+        
+        .procedures-section {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+        }
+        
+        .procedures-section h3 {
+            color: #856404;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .procedure-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .procedure-list li {
+            padding: 12px 0;
+            padding-left: 35px;
+            position: relative;
+            color: #666;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .procedure-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .procedure-list li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            background: #ffc107;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: white;
+            counter-increment: list-counter;
+            content: counter(list-counter);
+            counter-reset: none;
+        }
+        
+        .procedure-list {
+            counter-reset: list-counter;
+        }
+        
+        .specialist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .specialist-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-top: 3px solid #dc3545;
+            transition: all 0.3s ease;
+        }
+        
+        .specialist-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        }
+        
+        .specialist-icon {
+            font-size: 2.5rem;
+            color: #dc3545;
+            margin-bottom: 15px;
+        }
+        
+        .specialist-card h6 {
+            color: #333;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .specialist-card p {
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+        }
+        
+        .location-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .location-name {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+        
+        .location-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .location-info span {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .location-info i {
+            color: #dc3545;
+            width: 18px;
+        }
+        
+        .location-button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .location-button:hover {
+            background: #c82333;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #e7f3ff 0%, #f0f9ff 100%);
+            border-left: 4px solid #0066cc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .info-box i {
+            color: #0066cc;
+            margin-right: 10px;
+        }
+        
+        .info-box strong {
+            color: #0066cc;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-light py-2 d-none d-lg-block">
+        <div class="container d-flex justify-content-between">
+            <div><i class="fas fa-phone-alt me-2 text-danger"></i> Emergency: 1-500-123</div>
+            <div>
+                <a href="#" class="text-decoration-none text-dark me-3"><i class="fas fa-envelope me-1"></i> info@dokutah.com</a>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="janji-temu.html"><i class="fas fa-hospital me-2"></i>DOKUTAH</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="janji-temu.html">Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link" href="janji-temu.html#layanan">Layanan</a></li>
+                    <li class="nav-item"><a class="nav-link" href="janji-temu.html#dokter">Dokter</a></li>
+                    <li class="nav-item"><a class="nav-link" href="janji-temu.html#artikel">Artikel</a></li>
+                </ul>
+                <a href="emergency.html" class="btn btn-danger ms-3 rounded-pill px-4 fw-bold">Darurat</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="emergency-header">
+        <div class="container">
+            <h1><i class="fas fa-exclamation-circle me-3"></i>LAYANAN DARURAT 24/7</h1>
+            <p class="lead mb-0">Kami siap membantu Anda kapan saja dalam situasi darurat medis</p>
+            
+            <div class="emergency-number">
+                <div class="big-number">📞 1-500-123</div>
+                <p><i class="fas fa-check-circle me-2"></i>Hubungi kami segera untuk pertolongan darurat</p>
+                <p><i class="fas fa-clock me-2"></i>Tersedia 24 jam setiap hari tanpa henti</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <!-- Quick Emergency Services -->
+        <div class="mb-5">
+            <h2 class="mb-4"><i class="fas fa-heartbeat me-2 text-danger"></i>Layanan Darurat Kami</h2>
+            <div class="emergency-grid">
+                <div class="emergency-card">
+                    <div class="emergency-card-icon">
+                        <i class="fas fa-ambulance"></i>
+                    </div>
+                    <h5>Ambulans 24/7</h5>
+                    <p>Layanan ambulans siap antar jemput pasien dalam kondisi darurat dengan peralatan lengkap.</p>
+                    <div class="emergency-info">
+                        <i class="fas fa-phone"></i>
+                        <span>1-500-123</span>
+                    </div>
+                    <button class="call-button" onclick="callEmergency('1-500-123')">
+                        <i class="fas fa-phone"></i> HUBUNGI SEKARANG
+                    </button>
+                </div>
+
+                <div class="emergency-card">
+                    <div class="emergency-card-icon">
+                        <i class="fas fa-hospital"></i>
+                    </div>
+                    <h5>Ruang IGD</h5>
+                    <p>Ruang Instalasi Gawat Darurat lengkap dengan dokter spesialis dan perawat berpengalaman.</p>
+                    <div class="emergency-info">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Jl. Pemuda No. 8, Ambarawa</span>
+                    </div>
+                    <button class="call-button" onclick="viewLocation()">
+                        <i class="fas fa-directions"></i> LIHAT LOKASI
+                    </button>
+                </div>
+
+                <div class="emergency-card">
+                    <div class="emergency-card-icon">
+                        <i class="fas fa-stethoscope"></i>
+                    </div>
+                    <h5>Konsultasi Medis</h5>
+                    <p>Konsultasi darurat dengan dokter spesialis melalui telepon untuk penanganan awal.</p>
+                    <div class="emergency-info">
+                        <i class="fas fa-phone"></i>
+                        <span>1-500-123</span>
+                    </div>
+                    <button class="call-button" onclick="callEmergency('1-500-123')">
+                        <i class="fas fa-phone"></i> HUBUNGI DOKTER
+                    </button>
+                </div>
+
+                <div class="emergency-card">
+                    <div class="emergency-card-icon">
+                        <i class="fas fa-pills"></i>
+                    </div>
+                    <h5>Farmasi 24 Jam</h5>
+                    <p>Apotek darurat dengan stok obat lengkap dan apoteker siaga setiap waktu.</p>
+                    <div class="emergency-info">
+                        <i class="fas fa-phone"></i>
+                        <span>1-500-456</span>
+                    </div>
+                    <button class="call-button" onclick="callEmergency('1-500-456', 'Farmasi')">
+                        <i class="fas fa-phone"></i> HUBUNGI
+                    </button>
+                </div>
+
+                <div class="emergency-card">
+                    <div class="emergency-card-icon">
+                        <i class="fas fa-procedures"></i>
+                    </div>
+                    <h5>Operasi Darurat</h5>
+                    <p>Tim bedah siap untuk operasi darurat dengan ruang operasi yang fully equipped.</p>
+                    <div class="emergency-info">
+                        <i class="fas fa-phone"></i>
+                        <span>1-500-123</span>
+                    </div>
+                    <button class="call-button" onclick="callEmergency('1-500-123')">
+                        <i class="fas fa-phone"></i> HUBUNGI SEKARANG
+                    </button>
+                </div>
+
+                <div class="emergency-card">
+                    <div class="emergency-card-icon">
+                        <i class="fas fa-vials"></i>
+                    </div>
+                    <h5>Laboratorium</h5>
+                    <p>Pemeriksaan laboratorium darurat dengan hasil cepat untuk diagnosis akurat.</p>
+                    <div class="emergency-info">
+                        <i class="fas fa-phone"></i>
+                        <span>1-500-789</span>
+                    </div>
+                    <button class="call-button" onclick="callEmergency('1-500-789', 'Lab')">
+                        <i class="fas fa-phone"></i> HUBUNGI
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- What to Do in Emergencies -->
+        <div class="procedures-section">
+            <h3><i class="fas fa-list me-2"></i>Panduan Penanganan Darurat</h3>
+            <ul class="procedure-list">
+                <li><strong>Hubungi Layanan Darurat Kami</strong> - Segera hubungi nomor darurat 1-500-123 untuk mendapatkan bantuan</li>
+                <li><strong>Berikan Informasi Lengkap</strong> - Jelaskan kondisi pasien, lokasi, dan nomor kontak dengan jelas</li>
+                <li><strong>Siapkan Dokumen Penting</strong> - Kumpulkan kartu pasien, kartu BPJS, atau dokumen medis bila ada</li>
+                <li><strong>Jangan Bergerak Sembarangan</strong> - Jika terjatuh atau cedera, jangan memindahkan pasien sebelum tenaga medis tiba</li>
+                <li><strong>Tunggu Ambulans</strong> - Pastikan jalan menuju lokasi jelas untuk memudahkan ambulans tiba</li>
+                <li><strong>Lakukan Pertolongan Awal</strong> - Ikuti instruksi operator darurat untuk pertolongan pertama</li>
+                <li><strong>Siap Diterima di IGD</strong> - Ruang IGD kami siap menangani kasus darurat dengan tim profesional</li>
+            </ul>
+        </div>
+
+        <!-- Emergency Specialists -->
+        <div class="mb-5">
+            <h2 class="mb-4"><i class="fas fa-users-medical me-2 text-danger"></i>Dokter Spesialis Siaga</h2>
+            <p class="text-muted mb-4">Tim dokter spesialis kami siaga 24/7 untuk menangani berbagai kasus darurat medis</p>
+            
+            <div class="specialist-grid">
+                <div class="specialist-card">
+                    <div class="specialist-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h6>Kardiologi</h6>
+                    <p>Spesialis untuk penyakit jantung dan pembuluh darah darurat</p>
+                    <span>Dr. Budi Santoso</span>
+                </div>
+                <div class="specialist-card">
+                    <div class="specialist-icon">
+                        <i class="fas fa-lungs"></i>
+                    </div>
+                    <h6>Pulmonologi</h6>
+                    <p>Spesialis untuk gangguan pernapasan dan paru-paru</p>
+                    <span>Dr. Siti Nurhaliza</span>
+                </div>
+                <div class="specialist-card">
+                    <div class="specialist-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h6>Neurologi</h6>
+                    <p>Spesialis untuk stroke dan gangguan saraf darurat</p>
+                    <span>Dr. Ahmad Wijaya</span>
+                </div>
+                <div class="specialist-card">
+                    <div class="specialist-icon">
+                        <i class="fas fa-bone"></i>
+                    </div>
+                    <h6>Ortopedi</h6>
+                    <p>Spesialis untuk cedera tulang dan sendi darurat</p>
+                    <span>Dr. Rina Handoko</span>
+                </div>
+                <div class="specialist-card">
+                    <div class="specialist-icon">
+                        <i class="fas fa-syringe"></i>
+                    </div>
+                    <h6>Anestesi</h6>
+                    <p>Tim anestesi untuk operasi darurat dan pengelolaan nyeri</p>
+                    <span>Dr. Hendra Kusuma</span>
+                </div>
+                <div class="specialist-card">
+                    <div class="specialist-icon">
+                        <i class="fas fa-child"></i>
+                    </div>
+                    <h6>Pediatri</h6>
+                    <p>Spesialis anak untuk keadaan darurat pediatrik</p>
+                    <span>Dr. Eka Putri</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Locations -->
+        <div class="mb-5">
+            <h2 class="mb-4"><i class="fas fa-map-marked me-2 text-danger"></i>Lokasi Kami</h2>
+            
+            <div class="location-card">
+                <div class="location-name">
+                    <i class="fas fa-hospital me-2 text-danger"></i>Rumah Sakit RS SEHAT - Cabang Utama
+                </div>
+                <div class="location-info">
+                    <span>
+                        <i class="fas fa-map-marker-alt"></i>
+                        Jl. Pemuda No. 8, Ambarawa, Jawa Tengah 50615
+                    </span>
+                    <span>
+                        <i class="fas fa-phone"></i>
+                        1-500-123 (Darurat)
+                    </span>
+                    <span>
+                        <i class="fas fa-phone"></i>
+                        (024) 6721-234 (Umum)
+                    </span>
+                    <span>
+                        <i class="fas fa-envelope"></i>
+                        emergency@dokutah.com
+                    </span>
+                </div>
+                <button class="location-button" onclick="openMaps('Jl. Pemuda No. 8, Ambarawa')">
+                    <i class="fas fa-directions me-2"></i>Buka di Google Maps
+                </button>
+            </div>
+        </div>
+
+        <!-- Important Information -->
+        <div class="mb-5">
+            <h2 class="mb-4"><i class="fas fa-info-circle me-2 text-danger"></i>Informasi Penting</h2>
+            
+            <div class="info-box">
+                <i class="fas fa-credit-card"></i>
+                <strong>Asuransi:</strong> Kami menerima BPJS, asuransi swasta, dan pasien umum tanpa asuransi
+            </div>
+            
+            <div class="info-box">
+                <i class="fas fa-file-medical"></i>
+                <strong>Dokumen:</strong> Siapkan kartu identitas, kartu asuransi, dan riwayat medis jika tersedia
+            </div>
+            
+            <div class="info-box">
+                <i class="fas fa-clock"></i>
+                <strong>Jam Layanan:</strong> Layanan darurat tersedia 24 jam setiap hari, 7 hari seminggu tanpa libur
+            </div>
+            
+            <div class="info-box">
+                <i class="fas fa-stethoscope"></i>
+                <strong>Fasilitas:</strong> Ruang IGD, kamar observasi, operasi darurat, laboratorium 24 jam, dan farmasi
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white pt-5 pb-3 mt-auto">
+        <div class="container">
+            <div class="row text-center text-md-start">
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <h5 class="text-uppercase mb-4 fw-bold text-warning">RS SEHAT</h5>
+                    <p>Melayani dengan sepenuh hati demi kesembuhan dan kenyamanan Anda. Hadir dengan inovasi digital untuk memudahkan akses kesehatan.</p>
+                </div>
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <h5 class="text-uppercase mb-4 fw-bold text-warning">Hubungi Kami</h5>
+                    <p><i class="fas fa-home me-3"></i> Jl. Pemuda No. 8, Ambarawa</p>
+                    <p><i class="fas fa-envelope me-3"></i> info@dokutah.com</p>
+                    <p><i class="fas fa-phone me-3"></i> +62 812 3456 7890</p>
+                </div>
+                <div class="col-md-12 col-lg-4 mb-4 text-center text-lg-start">
+                    <h5 class="text-uppercase mb-4 fw-bold text-warning">Ikuti Kami</h5>
+                    <a href="#" class="text-white me-4 fs-4"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-white me-4 fs-4"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="#" class="text-white me-4 fs-4"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+            <hr class="mb-4">
+            <div class="text-center">
+                <p>&copy; 2026 Dokutah. Hak Cipta Dilindungi.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function callEmergency(phone, service = 'Darurat') {
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isAndroid = /android/.test(userAgent);
+            const isIOS = /iphone|ipad|ipod/.test(userAgent);
+
+            if (isAndroid || isIOS) {
+                window.location.href = `tel:${phone}`;
+            } else {
+                // For desktop, show alert with phone number
+                showAlert(`${service}: ${phone}`, 'Silakan hubungi nomor berikut melalui telepon Anda');
+            }
+        }
+
+        function viewLocation() {
+            showAlert('Lokasi RS SEHAT', 'Jl. Pemuda No. 8, Ambarawa, Jawa Tengah\n\nAlamatkan ambulans atau bawa pasien ke lokasi ini');
+        }
+
+        function openMaps(location) {
+            const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(location)}`;
+            window.open(mapsUrl, '_blank');
+        }
+
+        function showAlert(title, message) {
+            alert(`${title}\n\n${message}`);
+        }
+
+        // Keyboard shortcut for emergency call
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'E' || event.key === 'e') {
+                if (event.ctrlKey || event.metaKey) {
+                    callEmergency('1-500-123');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
