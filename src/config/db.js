@@ -12,7 +12,10 @@
  * - Arrow function: di semua fungsi pendek
  */
 
-require('dotenv').config();
+const fs = require('fs');
+if (fs.existsSync('.env')) {
+  require('dotenv').config();
+}
 const { Pool } = require('pg');
 
 // ─── Closure: menyimpan satu instance Pool ────────────────────────────────────

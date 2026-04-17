@@ -7,10 +7,13 @@
  * Konsep JS yang diterapkan:
  * - Singleton: hanya satu instance client
  * - Lazy initialization: client dibuat saat pertama kali diakses
- * - Environment variables: dari .env
+ * - Environment variables: dari .env atau Railway
  */
 
-require('dotenv').config();
+const fs = require('fs');
+if (fs.existsSync('.env')) {
+  require('dotenv').config();
+}
 const { createClient } = require('@supabase/supabase-js');
 
 let _supabaseClient = null;
