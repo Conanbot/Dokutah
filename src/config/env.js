@@ -42,6 +42,13 @@ const OPTIONAL_VARS = [
  */
 const createEnvValidator = (required) => {
   return () => {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+      console.error('❌ Environment variable belum diisi:');
+      console.error('- SUPABASE_URL');
+      console.error('- SUPABASE_ANON_KEY');
+      process.exit(1);
+    }
+
     // Higher-order function: filter + map untuk cari yang kosong
     const missing = required.filter((key) => !process.env[key]);
 
