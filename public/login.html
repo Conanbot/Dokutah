@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Dokutah</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 450px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: #667eea;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .form-group input {
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 12px 15px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .form-check {
+            margin-bottom: 20px;
+        }
+
+        .form-check input {
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+        }
+
+        .form-check input:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+
+        .form-check label {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 0;
+            margin-left: 5px;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+
+        .forgot-password a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        .login-divider {
+            display: flex;
+            align-items: center;
+            margin: 30px 0;
+            color: #ccc;
+        }
+
+        .login-divider span {
+            flex: 1;
+            height: 1px;
+            background-color: #e0e0e0;
+        }
+
+        .login-divider p {
+            margin: 0 15px;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .social-login {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .social-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background: white;
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .social-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .signup-link {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        .signup-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        @media (max-width: 576px) {
+            .login-container {
+                padding: 30px 20px;
+                margin: 20px;
+            }
+
+            .social-login {
+                flex-wrap: wrap;
+            }
+
+            .social-btn {
+                flex: 1 1 calc(50% - 8px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1><i class="fas fa-hospital me-2"></i>DOKUTAH</h1>
+            <p>Masuk ke akun Anda</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email"><i class="fas fa-envelope me-2"></i>Email</label>
+                <input 
+                    type="email" 
+                    class="form-control" 
+                    id="email" 
+                    name="email" 
+                    placeholder="Masukkan email Anda"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password"><i class="fas fa-lock me-2"></i>Password</label>
+                <input 
+                    type="password" 
+                    class="form-control" 
+                    id="password" 
+                    name="password" 
+                    placeholder="Masukkan password Anda"
+                    required
+                >
+            </div>
+
+            <div class="form-check">
+                <input 
+                    class="form-check-input" 
+                    type="checkbox" 
+                    id="rememberMe" 
+                    name="rememberMe"
+                >
+                <label class="form-check-label" for="rememberMe">
+                    Ingat saya
+                </label>
+            </div>
+
+            <div class="forgot-password">
+                <a href="#"><i class="fas fa-question-circle me-1"></i>Lupa Password?</a>
+            </div>
+
+            <button type="submit" class="btn-login">
+                <i class="fas fa-sign-in-alt me-2"></i>Masuk
+            </button>
+        </form>
+
+        <div class="login-divider">
+            <span></span>
+            <p>atau</p>
+            <span></span>
+        </div>
+
+        <div class="social-login">
+            <button type="button" class="social-btn">
+                <i class="fab fa-google"></i>Google
+            </button>
+            <button type="button" class="social-btn">
+                <i class="fab fa-facebook"></i>Facebook
+            </button>
+        </div>
+
+        <div class="signup-link">
+            Belum punya akun? <a href="#"><i class="fas fa-user-plus me-1"></i>Daftar di sini</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+            
+            // Validasi input
+            if (!email || !password) {
+                showError('Harap isi semua field');
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                showError('Format email tidak valid');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showError('Password minimal 6 karakter');
+                return;
+            }
+            
+            // Simpan preferensi "Ingat saya"
+            if (rememberMe) {
+                localStorage.setItem('rememberEmail', email);
+            } else {
+                localStorage.removeItem('rememberEmail');
+            }
+            
+            // Kirim ke server (ganti dengan endpoint API Anda)
+            console.log('Login attempt:', { email, password, rememberMe });
+            alert('Login berhasil! (Demo)');
+            // window.location.href = 'index.html';
+        });
+        
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+        
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Load remembered email
+        window.addEventListener('load', function() {
+            const rememberEmail = localStorage.getItem('rememberEmail');
+            if (rememberEmail) {
+                document.getElementById('email').value = rememberEmail;
+                document.getElementById('rememberMe').checked = true;
+            }
+        });
+    </script>
+</body>
+</html>
