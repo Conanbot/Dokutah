@@ -2,59 +2,63 @@
 
 /**
  * src/controllers/jadwalController.js
- * Handler untuk data jadwal praktik dokter.
+ * Disesuaikan dengan schema Hans:
+ *   - Tabel: jadwal_dokter, dokter, jenis_poli
+ *
+ * Mapping kolom:
+ *   id_jadwal      → id_jadwal_dokter
+ *   hari           → jadwal_praktik  (Hans simpan hari sebagai string di sini)
+ *   jam_mulai      → jam_periksa_buka
+ *   jam_selesai    → jam_periksa_tutup
+ *   kuota_maksimal → tidak ada di ERD Hans (return null)
  */
 
-const { query }                           = require('../config/db');
+const { getSupabaseClient }             = require('../config/supabase');
 const { successResponse, notFoundResponse } = require('../utils/responseHelper');
 
-const URUTAN_HARI = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+// Normalise ke format yang dipakai frontend
+const normaliseJadwal = (j) => ({
+  id_jadwal:      j.id_jadwal_dokter,
+  hari:           j.jadwal_praktik   || null,
+  jam_mulai:      j.jam_periksa_buka  || null,
+  jam_selesai:    j.jam_periksa_tutup || null,
+  kuota_maksimal: j.kuota_maksimal    || null,  // tambah kolom ini Hans jika diperlukan
+  dokter: j.dokter ? {
+    id_dokter:   j.dokter.id_dokter,
+    nama_dokter: j.dokter.nama_dokter,
+    spesialis:   j.dokter.spesialis || null,
+  } : null,
+  poli: j.jenis_poli ? {
+    id_poli:   j.jenis_poli.id_poli,
+    nama_poli: j.jenis_poli.nama_poli,
+  } : null,
+});
 
 /**
- * getAll — GET /api/jadwal
- * Mengembalikan semua jadwal, joined dengan nama dokter.
- * Diurutkan berdasarkan urutan hari dalam seminggu.
+ * getAll — GET /api/jadwal?id_dokter=
  */
 const getAll = async (req, res, next) => {
   try {
     const { id_dokter } = req.query;
+    const supabase      = getSupabaseClient();
 
-    const params = [];
-    let sql = `
-      SELECT j.id_jadwal, j.hari, j.jam_mulai, j.jam_selesai, j.kuota_maksimal,
-             d.id_dokter, d.nama_dokter, d.spesialis,
-             (SELECT COUNT(*) FROM pemesanan p WHERE p.id_jadwal = j.id_jadwal) AS terisi
-      FROM jadwal_praktik j
-      JOIN dokter d ON j.id_dokter = d.id_dokter
-    `;
+    let q = supabase
+      .from('jadwal_dokter')
+      .select(`
+        id_jadwal_dokter, jadwal_praktik,
+        jam_periksa_buka, jam_periksa_tutup,
+        dokter ( id_dokter, nama_dokter, spesialis ),
+        jenis_poli ( id_poli, nama_poli )
+      `);
 
-    if (id_dokter) {
-      params.push(id_dokter);
-      sql += ` WHERE j.id_dokter = $1`;
-    }
+    if (id_dokter) q = q.eq('dokter_id_dokter', id_dokter);
 
-    const { rows } = await query(sql, params);
+    const { data, error } = await q;
+    if (error) throw error;
 
-    // Sort berdasarkan urutan hari — Higher-order function (sort dengan comparator)
-    const sorted = rows.sort((a, b) => {
-      const idxA = URUTAN_HARI.indexOf(a.hari);
-      const idxB = URUTAN_HARI.indexOf(b.hari);
-      return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
-    });
-
-    // Map untuk tambahkan field `sisa_kuota` — Higher-order function
-    const enriched = sorted.map(({ terisi, kuota_maksimal, ...rest }) => ({
-      ...rest,
-      kuota_maksimal,
-      terisi:      parseInt(terisi, 10),
-      sisa_kuota:  kuota_maksimal - parseInt(terisi, 10),
-      penuh:       parseInt(terisi, 10) >= kuota_maksimal,
-    }));
-
-    successResponse(res, 'Jadwal berhasil diambil.', enriched, 200, { total: enriched.length });
-  } catch (err) {
-    next(err);
-  }
+    const result = data.map(normaliseJadwal);
+    successResponse(res, 'Jadwal berhasil diambil.', result, 200, { total: result.length });
+  } catch (err) { next(err); }
 };
 
 /**
@@ -62,31 +66,23 @@ const getAll = async (req, res, next) => {
  */
 const getById = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const { id }   = req.params;
+    const supabase = getSupabaseClient();
 
-    const { rows } = await query(
-      `SELECT j.*, d.nama_dokter, d.spesialis,
-              (SELECT COUNT(*) FROM pemesanan p WHERE p.id_jadwal = j.id_jadwal) AS terisi
-       FROM jadwal_praktik j
-       JOIN dokter d ON j.id_dokter = d.id_dokter
-       WHERE j.id_jadwal = $1`,
-      [id],
-    );
+    const { data, error } = await supabase
+      .from('jadwal_dokter')
+      .select(`
+        id_jadwal_dokter, jadwal_praktik,
+        jam_periksa_buka, jam_periksa_tutup,
+        dokter ( id_dokter, nama_dokter, spesialis ),
+        jenis_poli ( id_poli, nama_poli )
+      `)
+      .eq('id_jadwal_dokter', id)
+      .single();
 
-    if (!rows.length) return notFoundResponse(res, 'Jadwal');
-
-    const [jadwal] = rows; // Destructuring array
-    const { terisi, kuota_maksimal } = jadwal; // Destructuring object
-
-    successResponse(res, 'Detail jadwal berhasil diambil.', {
-      ...jadwal,
-      terisi:     parseInt(terisi, 10),
-      sisa_kuota: kuota_maksimal - parseInt(terisi, 10),
-      penuh:      parseInt(terisi, 10) >= kuota_maksimal,
-    });
-  } catch (err) {
-    next(err);
-  }
+    if (error || !data) return notFoundResponse(res, 'Jadwal');
+    successResponse(res, 'Detail jadwal berhasil diambil.', normaliseJadwal(data));
+  } catch (err) { next(err); }
 };
 
 module.exports = { getAll, getById };
