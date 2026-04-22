@@ -3,40 +3,39 @@
 /**
  * src/controllers/faskesController.js
  * Handler untuk data fasilitas kesehatan (puskesmas, klinik, RS, apotek).
+ * Menggunakan Supabase client — tidak ada koneksi PostgreSQL langsung.
  *
  * Konsep JS yang diterapkan:
  * - Async/Await
  * - Destructuring
- * - Higher-order functions: enrichWithDistance dari geoHelper
- * - Promise.all: query paralel untuk data gabungan
+ * - Higher-order functions: enrichWithDistance, reduce
  * - Arrow functions
  */
 
-const { query }                                         = require('../config/db');
+const { getSupabaseClient }                              = require('../config/supabase');
 const { successResponse, notFoundResponse,
-        clientErrorResponse }                           = require('../utils/responseHelper');
-const { enrichWithDistance, parseCoordinates }          = require('../utils/geoHelper');
+        clientErrorResponse }                            = require('../utils/responseHelper');
+const { enrichWithDistance, parseCoordinates }           = require('../utils/geoHelper');
 
 /**
  * getAll — GET /api/faskes
- * Mendapatkan semua faskes, optional filter by jenis.
  */
 const getAll = async (req, res, next) => {
   try {
     const { jenis } = req.query;
+    const supabase  = getSupabaseClient();
 
-    const params = [];
-    let sql = 'SELECT * FROM faskes';
+    let queryBuilder = supabase
+      .from('faskes')
+      .select('*')
+      .order('nama', { ascending: true });
 
-    if (jenis) {
-      params.push(jenis.toLowerCase());
-      sql += ` WHERE jenis = $1`;
-    }
+    if (jenis) queryBuilder = queryBuilder.eq('jenis', jenis.toLowerCase());
 
-    sql += ' ORDER BY nama ASC';
+    const { data, error } = await queryBuilder;
+    if (error) throw error;
 
-    const { rows } = await query(sql, params);
-    successResponse(res, 'Data faskes berhasil diambil.', rows, 200, { total: rows.length });
+    successResponse(res, 'Data faskes berhasil diambil.', data, 200, { total: data.length });
   } catch (err) {
     next(err);
   }
@@ -47,20 +46,25 @@ const getAll = async (req, res, next) => {
  */
 const getById = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const { rows } = await query('SELECT * FROM faskes WHERE id_faskes = $1', [id]);
+    const { id }   = req.params;
+    const supabase = getSupabaseClient();
 
-    if (!rows.length) return notFoundResponse(res, 'Fasilitas Kesehatan');
-    successResponse(res, 'Detail faskes berhasil diambil.', rows[0]);
+    const { data, error } = await supabase
+      .from('faskes')
+      .select('*')
+      .eq('id_faskes', id)
+      .single();
+
+    if (error || !data) return notFoundResponse(res, 'Fasilitas Kesehatan');
+    successResponse(res, 'Detail faskes berhasil diambil.', data);
   } catch (err) {
     next(err);
   }
 };
 
 /**
- * getNearby — GET /api/faskes/nearby?lat=...&lng=...&radius=...&jenis=...
- * Mencari faskes terdekat dari koordinat pengguna.
- * Menggunakan enrichWithDistance (HOF dari geoHelper).
+ * getNearby — GET /api/faskes/nearby?lat=&lng=&radius=&jenis=
+ * Faskes terdekat berdasarkan koordinat, menggunakan Haversine (geoHelper).
  */
 const getNearby = async (req, res, next) => {
   try {
@@ -71,19 +75,20 @@ const getNearby = async (req, res, next) => {
       return clientErrorResponse(res, 'Parameter lat dan lng tidak valid.', 400);
     }
 
-    const params = [];
-    let sql = 'SELECT * FROM faskes WHERE latitude IS NOT NULL AND longitude IS NOT NULL';
+    const supabase = getSupabaseClient();
 
-    if (jenis) {
-      params.push(jenis.toLowerCase());
-      sql += ` AND jenis = $${params.length}`;
-    }
+    let queryBuilder = supabase
+      .from('faskes')
+      .select('*')
+      .not('latitude', 'is', null)
+      .not('longitude', 'is', null);
 
-    const { rows } = await query(sql, params);
+    if (jenis) queryBuilder = queryBuilder.eq('jenis', jenis.toLowerCase());
 
-    // Higher-order function: enrichWithDistance menambah field distance_km
-    // dan memfilter berdasarkan radius, lalu sort terdekat ke terjauh
-    const enriched = enrichWithDistance(rows, userLocation, parseFloat(radius));
+    const { data, error } = await queryBuilder;
+    if (error) throw error;
+
+    const enriched = enrichWithDistance(data, userLocation, parseFloat(radius));
 
     successResponse(
       res,
@@ -99,27 +104,42 @@ const getNearby = async (req, res, next) => {
 
 /**
  * getAllJenis — GET /api/faskes/jenis
- * Mendapatkan daftar jenis faskes yang tersedia (untuk filter dropdown).
+ * Daftar jenis faskes yang tersedia + jumlah.
  */
 const getAllJenis = async (req, res, next) => {
   try {
-    const { rows } = await query(
-      'SELECT DISTINCT jenis, COUNT(*) as jumlah FROM faskes GROUP BY jenis ORDER BY jenis',
-    );
-    successResponse(res, 'Jenis faskes berhasil diambil.', rows);
+    const supabase = getSupabaseClient();
+
+    const { data, error } = await supabase
+      .from('faskes')
+      .select('jenis');
+
+    if (error) throw error;
+
+    // Hitung jumlah per jenis — Higher-order function (reduce)
+    const hitungan = data.reduce((acc, { jenis }) => {
+      acc[jenis] = (acc[jenis] || 0) + 1;
+      return acc;
+    }, {});
+
+    const result = Object.entries(hitungan)
+      .map(([jenis, jumlah]) => ({ jenis, jumlah }))
+      .sort((a, b) => b.jumlah - a.jumlah);
+
+    successResponse(res, 'Jenis faskes berhasil diambil.', result);
   } catch (err) {
     next(err);
   }
 };
 
 /**
- * getByDokterKriteria — GET /api/faskes/by-dokter?kriteria=umum&lat=&lng=&radius=
- * Faskes yang punya dokter jadwal matching kriteria spesialis, distance-sorted.
+ * getByDokterKriteria — GET /api/faskes/by-dokter?kriteria=&lat=&lng=&radius=
+ * Faskes yang punya dokter sesuai spesialis, sort jarak terdekat.
  */
 const getByDokterKriteria = async (req, res, next) => {
   try {
     const { kriteria, lat, lng, radius = '10' } = req.query;
-    
+
     if (!kriteria) {
       return clientErrorResponse(res, 'Parameter kriteria (spesialis) wajib.', 400);
     }
@@ -129,30 +149,53 @@ const getByDokterKriteria = async (req, res, next) => {
       return clientErrorResponse(res, 'Parameter lat dan lng tidak valid.', 400);
     }
 
-    const paramKriteria = `%${kriteria}%`;
-    const { rows } = await query(`
-      SELECT DISTINCT f.* 
-      FROM faskes f
-      JOIN jadwal_praktik jp ON f.id_faskes = jp.id_faskes
-      JOIN dokter d ON jp.id_dokter = d.id_dokter
-      WHERE f.latitude IS NOT NULL AND f.longitude IS NOT NULL
-        AND d.spesialis ILIKE $1
-      ORDER BY f.nama ASC
-    `, [paramKriteria]);
+    const supabase = getSupabaseClient();
 
-    const enriched = enrichWithDistance(rows, userLocation, parseFloat(radius));
+    // Cari dokter yang sesuai kriteria spesialis dulu
+    const { data: dokterData, error: dokterErr } = await supabase
+      .from('dokter')
+      .select('id_dokter')
+      .ilike('spesialis', `%${kriteria}%`);
+
+    if (dokterErr) throw dokterErr;
+
+    const idDokterList = dokterData.map(d => d.id_dokter);
+    if (!idDokterList.length) {
+      return successResponse(res, `Tidak ada dokter ${kriteria} ditemukan.`, [], 200, { total: 0 });
+    }
+
+    // Cari faskes yang punya jadwal dokter tersebut
+    const { data: jadwalData, error: jadwalErr } = await supabase
+      .from('jadwal_praktik')
+      .select('id_faskes')
+      .in('id_dokter', idDokterList)
+      .not('id_faskes', 'is', null);
+
+    if (jadwalErr) throw jadwalErr;
+
+    const idFaskesList = [...new Set(jadwalData.map(j => j.id_faskes))];
+    if (!idFaskesList.length) {
+      return successResponse(res, `Tidak ada faskes dengan dokter ${kriteria}.`, [], 200, { total: 0 });
+    }
+
+    // Ambil data faskes
+    const { data: faskesData, error: faskesErr } = await supabase
+      .from('faskes')
+      .select('*')
+      .in('id_faskes', idFaskesList)
+      .not('latitude', 'is', null)
+      .not('longitude', 'is', null);
+
+    if (faskesErr) throw faskesErr;
+
+    const enriched = enrichWithDistance(faskesData, userLocation, parseFloat(radius));
 
     successResponse(
       res,
       `${enriched.length} faskes dengan dokter ${kriteria} dalam radius ${radius} km.`,
       enriched,
       200,
-      { 
-        total: enriched.length, 
-        kriteria,
-        radius_km: parseFloat(radius), 
-        user_location: userLocation 
-      }
+      { total: enriched.length, kriteria, radius_km: parseFloat(radius), user_location: userLocation },
     );
   } catch (err) {
     next(err);

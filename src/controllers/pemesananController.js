@@ -3,105 +3,109 @@
 /**
  * src/controllers/pemesananController.js
  * Handler untuk proses pemesanan / pendaftaran ke dokter.
+ * Menggunakan Supabase client — tidak ada koneksi PostgreSQL langsung.
  *
  * Konsep JS yang diterapkan:
  * - Async/Await
- * - withTransaction: multiple query dalam satu DB transaction
  * - Destructuring
  * - Arrow functions
- * - Error handling dengan AppError
+ * - Error handling
  */
 
-const { query, withTransaction }                          = require('../config/db');
+const { getSupabaseClient }                              = require('../config/supabase');
 const { successResponse, notFoundResponse,
-        clientErrorResponse }                             = require('../utils/responseHelper');
-const { AppError }                                        = require('../middleware/errorHandler');
+        clientErrorResponse }                            = require('../utils/responseHelper');
 
 /**
  * create — POST /api/pemesanan
- * Membuat pemesanan baru dengan pengecekan kuota via DB transaction.
- *
- * Menggunakan withTransaction agar:
- * - Cek kuota dan insert pemesanan berjalan ATOMIK
- * - Jika insert gagal, cek kuota juga di-rollback (tidak ada data korup)
+ * Membuat pemesanan baru dengan pengecekan kuota.
  */
 const create = async (req, res, next) => {
   try {
-    const { id_jadwal, nama_pasien, no_hp, catatan } = req.body; // Destructuring
+    const { id_jadwal, nama_pasien, no_hp, catatan } = req.body;
+    const supabase = getSupabaseClient();
 
-    const result = await withTransaction(async (client) => {
-      // 1. Lock baris jadwal agar tidak ada race condition (2 user pesan bersamaan)
-      const { rows: jadwalRows } = await client.query(
-        'SELECT kuota_maksimal FROM jadwal_praktik WHERE id_jadwal = $1 FOR UPDATE',
-        [id_jadwal],
+    // 1. Ambil data jadwal + kuota
+    const { data: jadwal, error: jadwalErr } = await supabase
+      .from('jadwal_praktik')
+      .select('kuota_maksimal')
+      .eq('id_jadwal', id_jadwal)
+      .single();
+
+    if (jadwalErr || !jadwal) {
+      return clientErrorResponse(res, 'Jadwal tidak ditemukan.', 404);
+    }
+
+    // 2. Hitung yang sudah terdaftar
+    const { count, error: countErr } = await supabase
+      .from('pemesanan')
+      .select('*', { count: 'exact', head: true })
+      .eq('id_jadwal', id_jadwal);
+
+    if (countErr) throw countErr;
+
+    const terisi = count || 0;
+
+    // 3. Cek kuota
+    if (terisi >= jadwal.kuota_maksimal) {
+      return clientErrorResponse(
+        res,
+        `Maaf, kuota jadwal ini sudah penuh (${jadwal.kuota_maksimal}/${jadwal.kuota_maksimal}).`,
+        400,
       );
+    }
 
-      if (!jadwalRows.length) throw AppError('Jadwal tidak ditemukan.', 404);
+    // 4. Insert pemesanan
+    const nomorAntrian = terisi + 1;
 
-      const { kuota_maksimal } = jadwalRows[0]; // Destructuring
+    const { data: pemesanan, error: insertErr } = await supabase
+      .from('pemesanan')
+      .insert({
+        id_jadwal,
+        nama_pasien: nama_pasien.trim(),
+        no_hp:       no_hp || null,
+        catatan:     catatan || null,
+        nomor_antrian: nomorAntrian,
+      })
+      .select()
+      .single();
 
-      // 2. Hitung yang sudah terdaftar
-      const { rows: hitungRows } = await client.query(
-        'SELECT COUNT(*) AS total FROM pemesanan WHERE id_jadwal = $1',
-        [id_jadwal],
-      );
-      const terisi = parseInt(hitungRows[0].total, 10);
-
-      // 3. Cek kuota
-      if (terisi >= kuota_maksimal) {
-        throw AppError(`Maaf, kuota jadwal ini sudah penuh (${kuota_maksimal}/${kuota_maksimal}).`, 400);
-      }
-
-      // 4. Generate nomor antrian
-      const nomorAntrian = terisi + 1;
-
-      // 5. Insert pemesanan
-      const { rows: newRows } = await client.query(
-        `INSERT INTO pemesanan (id_jadwal, nama_pasien, no_hp, catatan, nomor_antrian, created_at)
-         VALUES ($1, $2, $3, $4, $5, NOW())
-         RETURNING *`,
-        [id_jadwal, nama_pasien.trim(), no_hp || null, catatan || null, nomorAntrian],
-      );
-
-      return { pemesanan: newRows[0], sisa_kuota: kuota_maksimal - nomorAntrian };
-    });
+    if (insertErr) throw insertErr;
 
     successResponse(
       res,
-      `Pendaftaran berhasil! Nomor antrian Anda: ${result.pemesanan.nomor_antrian}`,
-      result,
+      `Pendaftaran berhasil! Nomor antrian Anda: ${nomorAntrian}`,
+      { pemesanan, sisa_kuota: jadwal.kuota_maksimal - nomorAntrian },
       201,
     );
   } catch (err) {
-    // Jika err adalah AppError (operational), teruskan langsung
-    // Jika tidak, bungkus sebagai server error
     next(err);
   }
 };
 
 /**
- * getByJadwal — GET /api/pemesanan?id_jadwal=...
- * Melihat daftar pemesanan untuk jadwal tertentu.
+ * getByJadwal — GET /api/pemesanan?id_jadwal=
  */
 const getByJadwal = async (req, res, next) => {
   try {
     const { id_jadwal } = req.query;
+    const supabase      = getSupabaseClient();
 
     if (!id_jadwal) {
       return clientErrorResponse(res, 'Parameter id_jadwal wajib diisi.', 400);
     }
 
-    const { rows } = await query(
-      `SELECT p.*, j.hari, j.jam_mulai, j.jam_selesai, d.nama_dokter
-       FROM pemesanan p
-       JOIN jadwal_praktik j ON p.id_jadwal = j.id_jadwal
-       JOIN dokter d ON j.id_dokter = d.id_dokter
-       WHERE p.id_jadwal = $1
-       ORDER BY p.nomor_antrian ASC`,
-      [id_jadwal],
-    );
+    const { data, error } = await supabase
+      .from('pemesanan')
+      .select(`
+        *,
+        jadwal_praktik (hari, jam_mulai, jam_selesai, dokter (nama_dokter))
+      `)
+      .eq('id_jadwal', id_jadwal)
+      .order('nomor_antrian', { ascending: true });
 
-    successResponse(res, 'Data pemesanan berhasil diambil.', rows, 200, { total: rows.length });
+    if (error) throw error;
+    successResponse(res, 'Data pemesanan berhasil diambil.', data, 200, { total: data.length });
   } catch (err) {
     next(err);
   }
@@ -109,20 +113,21 @@ const getByJadwal = async (req, res, next) => {
 
 /**
  * cancel — DELETE /api/pemesanan/:id
- * Membatalkan pemesanan berdasarkan ID.
  */
 const cancel = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const { id }   = req.params;
+    const supabase = getSupabaseClient();
 
-    const { rows } = await query(
-      'DELETE FROM pemesanan WHERE id_pemesanan = $1 RETURNING *',
-      [id],
-    );
+    const { data, error } = await supabase
+      .from('pemesanan')
+      .delete()
+      .eq('id_pemesanan', id)
+      .select()
+      .single();
 
-    if (!rows.length) return notFoundResponse(res, 'Pemesanan');
-
-    successResponse(res, 'Pemesanan berhasil dibatalkan.', rows[0]);
+    if (error || !data) return notFoundResponse(res, 'Pemesanan');
+    successResponse(res, 'Pemesanan berhasil dibatalkan.', data);
   } catch (err) {
     next(err);
   }

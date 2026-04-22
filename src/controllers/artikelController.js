@@ -2,18 +2,19 @@
 
 /**
  * src/controllers/artikelController.js
- * Handler untuk konten artikel kesehatan (CMS sederhana).
+ * Handler untuk konten artikel kesehatan.
+ * Menggunakan Supabase client — tidak ada koneksi PostgreSQL langsung.
  *
  * Konsep JS yang diterapkan:
  * - Async/Await + try/catch
  * - Destructuring dari req.body, req.params, req.query
- * - Higher-order functions: map untuk format response
  * - Arrow functions
+ * - Object.freeze untuk konstanta
  */
 
-const { query }                                          = require('../config/db');
+const { getSupabaseClient }                              = require('../config/supabase');
 const { successResponse, notFoundResponse,
-        clientErrorResponse }                           = require('../utils/responseHelper');
+        clientErrorResponse }                            = require('../utils/responseHelper');
 
 // Kategori artikel yang diizinkan — Object.freeze agar tidak bisa diubah
 const KATEGORI_VALID = Object.freeze([
@@ -23,58 +24,34 @@ const KATEGORI_VALID = Object.freeze([
 
 /**
  * getAll — GET /api/artikel
- * Mendapatkan semua artikel, dengan filter opsional berdasarkan kategori.
  */
 const getAll = async (req, res, next) => {
   try {
     const { kategori, limit = '10', page = '1', search } = req.query;
+    const supabase = getSupabaseClient();
 
-    const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
-    const params = [];
-    const conditions = [];
+    const limitInt  = parseInt(limit, 10);
+    const pageInt   = parseInt(page, 10);
+    const offset    = (pageInt - 1) * limitInt;
 
-    let sql = `
-      SELECT id_artikel, judul, ringkasan, kategori, gambar_url,
-             penulis, created_at, slug
-      FROM artikel
-      WHERE aktif = true
-    `;
+    let queryBuilder = supabase
+      .from('artikel')
+      .select('id_artikel, judul, ringkasan, kategori, gambar_url, penulis, created_at, slug', { count: 'exact' })
+      .eq('aktif', true)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limitInt - 1);
 
-    if (kategori) {
-      params.push(kategori.toLowerCase());
-      conditions.push(`kategori = $${params.length}`);
-    }
+    if (kategori) queryBuilder = queryBuilder.eq('kategori', kategori.toLowerCase());
+    if (search)   queryBuilder = queryBuilder.or(`judul.ilike.%${search}%,ringkasan.ilike.%${search}%`);
 
-    if (search) {
-      params.push(`%${search}%`);
-      conditions.push(`(judul ILIKE $${params.length} OR ringkasan ILIKE $${params.length})`);
-    }
+    const { data, error, count } = await queryBuilder;
+    if (error) throw error;
 
-    if (conditions.length > 0) {
-      sql += ` AND ${conditions.join(' AND ')}`;
-    }
-
-    // Total count untuk pagination
-    const countSql = sql.replace(
-      'SELECT id_artikel, judul, ringkasan, kategori, gambar_url, penulis, created_at, slug',
-      'SELECT COUNT(*)',
-    );
-    const { rows: countRows } = await query(countSql, params);
-    const total = parseInt(countRows[0].count, 10);
-
-    // Tambah ORDER BY, LIMIT, OFFSET
-    params.push(parseInt(limit, 10));
-    sql += ` ORDER BY created_at DESC LIMIT $${params.length}`;
-    params.push(offset);
-    sql += ` OFFSET $${params.length}`;
-
-    const { rows } = await query(sql, params);
-
-    successResponse(res, 'Artikel berhasil diambil.', rows, 200, {
-      total,
-      page:      parseInt(page, 10),
-      limit:     parseInt(limit, 10),
-      totalPage: Math.ceil(total / parseInt(limit, 10)),
+    successResponse(res, 'Artikel berhasil diambil.', data, 200, {
+      total:     count,
+      page:      pageInt,
+      limit:     limitInt,
+      totalPage: Math.ceil(count / limitInt),
     });
   } catch (err) {
     next(err);
@@ -83,19 +60,21 @@ const getAll = async (req, res, next) => {
 
 /**
  * getBySlug — GET /api/artikel/:slug
- * Mendapatkan satu artikel lengkap berdasarkan slug URL-friendly.
  */
 const getBySlug = async (req, res, next) => {
   try {
-    const { slug } = req.params;
+    const { slug }  = req.params;
+    const supabase  = getSupabaseClient();
 
-    const { rows } = await query(
-      'SELECT * FROM artikel WHERE slug = $1 AND aktif = true',
-      [slug],
-    );
+    const { data, error } = await supabase
+      .from('artikel')
+      .select('*')
+      .eq('slug', slug)
+      .eq('aktif', true)
+      .single();
 
-    if (!rows.length) return notFoundResponse(res, 'Artikel');
-    successResponse(res, 'Artikel berhasil diambil.', rows[0]);
+    if (error || !data) return notFoundResponse(res, 'Artikel');
+    successResponse(res, 'Artikel berhasil diambil.', data);
   } catch (err) {
     next(err);
   }
@@ -103,18 +82,29 @@ const getBySlug = async (req, res, next) => {
 
 /**
  * getKategori — GET /api/artikel/kategori
- * Mengembalikan daftar kategori yang tersedia + jumlah artikel per kategori.
  */
 const getKategori = async (req, res, next) => {
   try {
-    const { rows } = await query(
-      `SELECT kategori, COUNT(*) AS jumlah
-       FROM artikel
-       WHERE aktif = true
-       GROUP BY kategori
-       ORDER BY jumlah DESC`,
-    );
-    successResponse(res, 'Kategori berhasil diambil.', rows);
+    const supabase = getSupabaseClient();
+
+    const { data, error } = await supabase
+      .from('artikel')
+      .select('kategori')
+      .eq('aktif', true);
+
+    if (error) throw error;
+
+    // Hitung jumlah per kategori — Higher-order function (reduce)
+    const hitungan = data.reduce((acc, { kategori }) => {
+      acc[kategori] = (acc[kategori] || 0) + 1;
+      return acc;
+    }, {});
+
+    const result = Object.entries(hitungan)
+      .map(([kategori, jumlah]) => ({ kategori, jumlah }))
+      .sort((a, b) => b.jumlah - a.jumlah);
+
+    successResponse(res, 'Kategori berhasil diambil.', result);
   } catch (err) {
     next(err);
   }
@@ -122,11 +112,11 @@ const getKategori = async (req, res, next) => {
 
 /**
  * create — POST /api/artikel
- * Membuat artikel baru (endpoint CMS — idealnya dilindungi auth di future).
  */
 const create = async (req, res, next) => {
   try {
     const { judul, konten, ringkasan, kategori, gambar_url, penulis } = req.body;
+    const supabase = getSupabaseClient();
 
     if (!KATEGORI_VALID.includes(kategori?.toLowerCase())) {
       return clientErrorResponse(
@@ -136,21 +126,29 @@ const create = async (req, res, next) => {
       );
     }
 
-    // Buat slug dari judul: lowercase, spasi → strip, hapus karakter non-alphanumeric
     const slug = judul
       .toLowerCase()
       .replace(/\s+/g, '-')
       .replace(/[^a-z0-9-]/g, '')
       .replace(/-+/g, '-');
 
-    const { rows } = await query(
-      `INSERT INTO artikel (judul, konten, ringkasan, kategori, gambar_url, penulis, slug, aktif, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW())
-       RETURNING id_artikel, judul, kategori, slug, created_at`,
-      [judul, konten, ringkasan || '', kategori.toLowerCase(), gambar_url || null, penulis || 'Admin', slug],
-    );
+    const { data, error } = await supabase
+      .from('artikel')
+      .insert({
+        judul,
+        konten,
+        ringkasan:  ringkasan || '',
+        kategori:   kategori.toLowerCase(),
+        gambar_url: gambar_url || null,
+        penulis:    penulis || 'Admin',
+        slug,
+        aktif:      true,
+      })
+      .select('id_artikel, judul, kategori, slug, created_at')
+      .single();
 
-    successResponse(res, 'Artikel berhasil dibuat.', rows[0], 201);
+    if (error) throw error;
+    successResponse(res, 'Artikel berhasil dibuat.', data, 201);
   } catch (err) {
     next(err);
   }
