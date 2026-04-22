@@ -19,10 +19,11 @@
   "license": "ISC",
   "type": "commonjs",
   "engines": {
-  "node": ">=20.0.0"
+    "node": ">=20.0.0"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.100.1",
+    "@supabase/ssr": "^0.10.2",
+    "@supabase/supabase-js": "^2.104.0",
     "animejs": "^4.3.6",
     "cors": "^2.8.6",
     "dotenv": "^16.4.5",
