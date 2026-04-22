@@ -38,8 +38,13 @@ const startServer = async () => {
   try {
     await connectSupabase();
   } catch (err) {
-    console.error('[SERVER] Gagal koneksi Supabase:', err.message);
-    process.exit(1);
+    // Hanya exit jika credentials benar-benar salah (bukan schema belum siap)
+    const isFatal = !err.code || err.message?.includes('Missing Supabase');
+    if (isFatal) {
+      console.error('[SERVER] Fatal: Gagal koneksi Supabase:', err.message);
+      process.exit(1);
+    }
+    console.warn('[SERVER] Warning: Supabase partial, server tetap jalan.');
   }
 
   server.listen(PORT, () => {
