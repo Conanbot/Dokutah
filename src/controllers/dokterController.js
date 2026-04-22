@@ -3,88 +3,66 @@
 /**
  * src/controllers/dokterController.js
  * Handler untuk semua operasi data dokter.
+ * Menggunakan Supabase client — tidak ada koneksi PostgreSQL langsung.
  *
  * Konsep JS yang diterapkan:
  * - Async/Await + try/catch
  * - Destructuring dari req.params, req.query
- * - Higher-order functions: map, filter
+ * - Higher-order functions: map, filter, sort
  * - Arrow functions
+ * - Closure: getSupabaseClient sebagai singleton
  */
 
-const { query }                                          = require('../config/db');
+const { getSupabaseClient }                              = require('../config/supabase');
 const { successResponse, notFoundResponse }              = require('../utils/responseHelper');
-const { AppError }                                       = require('../middleware/errorHandler');
 const { enrichWithDistance, parseCoordinates }           = require('../utils/geoHelper');
 
 /**
  * getAll — GET /api/dokter
- * Mendapatkan semua dokter, dengan optional filter spesialis.
+ * Mendapatkan semua dokter, dengan optional filter spesialis/nama.
  */
 const getAll = async (req, res, next) => {
   try {
-    const { spesialis, nama } = req.query; // Destructuring query params
+    const { spesialis, nama } = req.query;
+    const supabase = getSupabaseClient();
 
-    let sql    = `
-      SELECT d.id_dokter, d.nama_dokter, d.spesialis, d.no_hp, d.foto_url,
-             d.latitude, d.longitude, d.alamat_praktik,
-             d.terima_bpjs, d.rating,
-             json_agg(
-               json_build_object('hari', j.hari, 'jam_mulai', j.jam_mulai, 'jam_selesai', j.jam_selesai, 'kuota', j.kuota_maksimal)
-               ORDER BY j.hari
-             ) FILTER (WHERE j.id_jadwal IS NOT NULL) AS jadwal
-      FROM dokter d
-      LEFT JOIN jadwal_praktik j ON d.id_dokter = j.id_dokter
-    `;
-    const params = [];
-    const conditions = [];
+    let queryBuilder = supabase
+      .from('dokter')
+      .select(`
+        id_dokter, nama_dokter, spesialis, no_hp, foto_url,
+        latitude, longitude, alamat_praktik, terima_bpjs, rating,
+        jadwal_praktik (hari, jam_mulai, jam_selesai, kuota_maksimal)
+      `)
+      .order('nama_dokter', { ascending: true });
 
-    // Build dynamic WHERE clause berdasarkan query params
-    if (spesialis) {
-      params.push(`%${spesialis}%`);
-      conditions.push(`d.spesialis ILIKE $${params.length}`);
-    }
-    if (nama) {
-      params.push(`%${nama}%`);
-      conditions.push(`d.nama_dokter ILIKE $${params.length}`);
-    }
+    if (spesialis) queryBuilder = queryBuilder.ilike('spesialis', `%${spesialis}%`);
+    if (nama)      queryBuilder = queryBuilder.ilike('nama_dokter', `%${nama}%`);
 
-    if (conditions.length > 0) {
-      sql += ` WHERE ${conditions.join(' AND ')}`;
-    }
+    const { data, error } = await queryBuilder;
+    if (error) throw error;
 
-    sql += ' GROUP BY d.id_dokter ORDER BY d.nama_dokter ASC';
-
-    const { rows } = await query(sql, params);
-    successResponse(res, `${rows.length} dokter ditemukan.`, rows, 200, { total: rows.length });
+    successResponse(res, `${data.length} dokter ditemukan.`, data, 200, { total: data.length });
   } catch (err) {
-    next(err); // lempar ke global error handler
+    next(err);
   }
 };
 
 /**
  * getById — GET /api/dokter/:id
- * Mendapatkan detail satu dokter berdasarkan ID.
  */
 const getById = async (req, res, next) => {
   try {
-    const { id } = req.params; // Destructuring
+    const { id } = req.params;
+    const supabase = getSupabaseClient();
 
-    const { rows } = await query(
-      `SELECT d.*, json_agg(
-         json_build_object('id_jadwal', j.id_jadwal, 'hari', j.hari, 'jam_mulai', j.jam_mulai,
-                           'jam_selesai', j.jam_selesai, 'kuota_maksimal', j.kuota_maksimal)
-         ORDER BY j.hari
-       ) FILTER (WHERE j.id_jadwal IS NOT NULL) AS jadwal
-       FROM dokter d
-       LEFT JOIN jadwal_praktik j ON d.id_dokter = j.id_dokter
-       WHERE d.id_dokter = $1
-       GROUP BY d.id_dokter`,
-      [id],
-    );
+    const { data, error } = await supabase
+      .from('dokter')
+      .select(`*, jadwal_praktik (id_jadwal, hari, jam_mulai, jam_selesai, kuota_maksimal)`)
+      .eq('id_dokter', id)
+      .single();
 
-    if (!rows.length) return notFoundResponse(res, 'Dokter');
-
-    successResponse(res, 'Detail dokter berhasil diambil.', rows[0]);
+    if (error || !data) return notFoundResponse(res, 'Dokter');
+    successResponse(res, 'Detail dokter berhasil diambil.', data);
   } catch (err) {
     next(err);
   }
@@ -92,18 +70,20 @@ const getById = async (req, res, next) => {
 
 /**
  * getBySpesialis — GET /api/dokter/spesialis/:jenis
- * Mencari dokter berdasarkan jenis spesialis.
  */
 const getBySpesialis = async (req, res, next) => {
   try {
     const { jenis } = req.params;
+    const supabase = getSupabaseClient();
 
-    const { rows } = await query(
-      `SELECT * FROM dokter WHERE spesialis ILIKE $1 ORDER BY rating DESC NULLS LAST`,
-      [`%${jenis}%`],
-    );
+    const { data, error } = await supabase
+      .from('dokter')
+      .select('*')
+      .ilike('spesialis', `%${jenis}%`)
+      .order('rating', { ascending: false, nullsFirst: false });
 
-    successResponse(res, `Dokter spesialis ${jenis} ditemukan.`, rows, 200, { total: rows.length });
+    if (error) throw error;
+    successResponse(res, `Dokter spesialis ${jenis} ditemukan.`, data, 200, { total: data.length });
   } catch (err) {
     next(err);
   }
@@ -111,40 +91,38 @@ const getBySpesialis = async (req, res, next) => {
 
 /**
  * getBpjsDokter — GET /api/dokter/bpjs?lat=&lng=
- * Dokter BPJS (terima_bpjs=true, spesialis Umum/Gigi), with jadwal, distance-sorted.
+ * Dokter yang terima BPJS, spesialis umum/gigi, diurutkan jarak terdekat.
  */
 const getBpjsDokter = async (req, res, next) => {
   try {
     const { lat, lng } = req.query;
     const userLocation = parseCoordinates(lat, lng);
+    const supabase     = getSupabaseClient();
 
-    let sql = `
-      SELECT d.id_dokter, d.nama_dokter, d.spesialis, d.no_hp, d.foto_url,
-             d.latitude, d.longitude, d.alamat_praktik, d.terima_bpjs, d.rating,
-             json_agg(
-               json_build_object('hari', j.hari, 'jam_mulai', j.jam_mulai, 'jam_selesai', j.jam_selesai, 'kuota', j.kuota_maksimal)
-               ORDER BY j.hari
-             ) FILTER (WHERE j.id_jadwal IS NOT NULL) AS jadwal
-      FROM dokter d
-      LEFT JOIN jadwal_praktik j ON d.id_dokter = j.id_dokter
-      WHERE d.terima_bpjs = true 
-        AND (d.spesialis ILIKE '%umum%' OR d.spesialis ILIKE '%gigi%')
-      GROUP BY d.id_dokter
-      ORDER BY d.nama_dokter ASC
-    `;
+    const { data, error } = await supabase
+      .from('dokter')
+      .select(`
+        id_dokter, nama_dokter, spesialis, no_hp, foto_url,
+        latitude, longitude, alamat_praktik, terima_bpjs, rating,
+        jadwal_praktik (hari, jam_mulai, jam_selesai, kuota_maksimal)
+      `)
+      .eq('terima_bpjs', true)
+      .or('spesialis.ilike.%umum%,spesialis.ilike.%gigi%')
+      .order('nama_dokter', { ascending: true });
 
-    const { rows } = await query(sql, []);
+    if (error) throw error;
 
-    let result = rows;
+    // Tambahkan jarak dan sort terdekat — Higher-order function
+    let result = data;
     if (userLocation) {
-      result = enrichWithDistance(rows, userLocation);
+      result = enrichWithDistance(data, userLocation);
       result.sort((a, b) => (a.distance_km || 999) - (b.distance_km || 999));
     }
 
-    successResponse(res, `${result.length} dokter BPJS ditemukan.`, result, 200, { 
-      total: result.length, 
+    successResponse(res, `${result.length} dokter BPJS ditemukan.`, result, 200, {
+      total:         result.length,
       bpjs_filtered: true,
-      user_location: userLocation 
+      user_location: userLocation,
     });
   } catch (err) {
     next(err);
@@ -152,54 +130,57 @@ const getBpjsDokter = async (req, res, next) => {
 };
 
 /**
- * getByFaskesKriteria — GET /api/dokter/by-faskes/:id_faskes?kriteria=umum&lat=&lng=
- * Dokter at specific faskes (via jadwal), filter kriteria spesialis, distance-sorted.
+ * getByFaskesKriteria — GET /api/dokter/by-faskes/:id_faskes?kriteria=&lat=&lng=
+ * Dokter yang bertugas di faskes tertentu, filter spesialis, sort jarak.
  */
 const getByFaskesKriteria = async (req, res, next) => {
   try {
-    const { id_faskes } = req.params;
+    const { id_faskes }  = req.params;
     const { kriteria, lat, lng } = req.query;
-    const userLocation = parseCoordinates(lat, lng);
+    const userLocation   = parseCoordinates(lat, lng);
+    const supabase       = getSupabaseClient();
 
-    const params = [id_faskes];
-    let conditions = 'WHERE jp.id_faskes = $1';
+    // Ambil id_dokter dari jadwal_praktik di faskes ini
+    let jadwalQuery = supabase
+      .from('jadwal_praktik')
+      .select('id_dokter')
+      .eq('id_faskes', id_faskes);
 
-    if (kriteria) {
-      params.push(`%${kriteria}%`);
-      conditions += ` AND d.spesialis ILIKE $${params.length}`;
-    }
+    const { data: jadwalData, error: jadwalErr } = await jadwalQuery;
+    if (jadwalErr) throw jadwalErr;
 
-    let sql = `
-      SELECT d.id_dokter, d.nama_dokter, d.spesialis, d.no_hp, d.foto_url,
-             d.latitude, d.longitude, d.alamat_praktik, d.terima_bpjs, d.rating,
-             json_agg(
-               json_build_object('id_jadwal', j.id_jadwal, 'hari', j.hari, 'jam_mulai', j.jam_mulai, 
-                                 'jam_selesai', j.jam_selesai, 'kuota_maksimal', j.kuota_maksimal)
-               ORDER BY j.hari
-             ) FILTER (WHERE j.id_jadwal IS NOT NULL) AS jadwal
-      FROM dokter d
-      JOIN jadwal_praktik jp ON d.id_dokter = jp.id_dokter
-      LEFT JOIN jadwal_praktik j ON d.id_dokter = j.id_dokter AND jp.id_faskes = j.id_faskes
-      ${conditions}
-      GROUP BY d.id_dokter
-      ORDER BY d.nama_dokter ASC
-    `;
+    const idDokterList = [...new Set(jadwalData.map(j => j.id_dokter))];
+    if (!idDokterList.length) return notFoundResponse(res, 'Dokter di faskes ini');
 
-    const { rows } = await query(sql, params);
+    // Ambil data dokter berdasarkan id list
+    let dokterQuery = supabase
+      .from('dokter')
+      .select(`
+        id_dokter, nama_dokter, spesialis, no_hp, foto_url,
+        latitude, longitude, alamat_praktik, terima_bpjs, rating,
+        jadwal_praktik (id_jadwal, hari, jam_mulai, jam_selesai, kuota_maksimal)
+      `)
+      .in('id_dokter', idDokterList)
+      .order('nama_dokter', { ascending: true });
 
-    let result = rows;
+    if (kriteria) dokterQuery = dokterQuery.ilike('spesialis', `%${kriteria}%`);
+
+    const { data, error } = await dokterQuery;
+    if (error) throw error;
+
+    let result = data;
     if (userLocation) {
-      result = enrichWithDistance(rows, userLocation);
+      result = enrichWithDistance(data, userLocation);
       result.sort((a, b) => (a.distance_km || 999) - (b.distance_km || 999));
     }
 
     if (!result.length) return notFoundResponse(res, 'Dokter di faskes ini');
 
-    successResponse(res, `Dokter di faskes ditemukan.`, result, 200, { 
-      total: result.length, 
-      faskes_id: id_faskes,
+    successResponse(res, 'Dokter di faskes ditemukan.', result, 200, {
+      total:         result.length,
+      faskes_id:     id_faskes,
       kriteria,
-      user_location: userLocation 
+      user_location: userLocation,
     });
   } catch (err) {
     next(err);

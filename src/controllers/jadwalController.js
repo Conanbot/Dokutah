@@ -3,55 +3,42 @@
 /**
  * src/controllers/jadwalController.js
  * Handler untuk data jadwal praktik dokter.
+ * Menggunakan Supabase client — tidak ada koneksi PostgreSQL langsung.
  */
 
-const { query }                           = require('../config/db');
-const { successResponse, notFoundResponse } = require('../utils/responseHelper');
+const { getSupabaseClient }                              = require('../config/supabase');
+const { successResponse, notFoundResponse }              = require('../utils/responseHelper');
 
 const URUTAN_HARI = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
 /**
  * getAll — GET /api/jadwal
- * Mengembalikan semua jadwal, joined dengan nama dokter.
- * Diurutkan berdasarkan urutan hari dalam seminggu.
  */
 const getAll = async (req, res, next) => {
   try {
     const { id_dokter } = req.query;
+    const supabase      = getSupabaseClient();
 
-    const params = [];
-    let sql = `
-      SELECT j.id_jadwal, j.hari, j.jam_mulai, j.jam_selesai, j.kuota_maksimal,
-             d.id_dokter, d.nama_dokter, d.spesialis,
-             (SELECT COUNT(*) FROM pemesanan p WHERE p.id_jadwal = j.id_jadwal) AS terisi
-      FROM jadwal_praktik j
-      JOIN dokter d ON j.id_dokter = d.id_dokter
-    `;
+    let queryBuilder = supabase
+      .from('jadwal_praktik')
+      .select(`
+        id_jadwal, hari, jam_mulai, jam_selesai, kuota_maksimal,
+        dokter (id_dokter, nama_dokter, spesialis)
+      `);
 
-    if (id_dokter) {
-      params.push(id_dokter);
-      sql += ` WHERE j.id_dokter = $1`;
-    }
+    if (id_dokter) queryBuilder = queryBuilder.eq('id_dokter', id_dokter);
 
-    const { rows } = await query(sql, params);
+    const { data, error } = await queryBuilder;
+    if (error) throw error;
 
-    // Sort berdasarkan urutan hari — Higher-order function (sort dengan comparator)
-    const sorted = rows.sort((a, b) => {
+    // Sort berdasarkan urutan hari — Higher-order function
+    const sorted = data.sort((a, b) => {
       const idxA = URUTAN_HARI.indexOf(a.hari);
       const idxB = URUTAN_HARI.indexOf(b.hari);
       return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
     });
 
-    // Map untuk tambahkan field `sisa_kuota` — Higher-order function
-    const enriched = sorted.map(({ terisi, kuota_maksimal, ...rest }) => ({
-      ...rest,
-      kuota_maksimal,
-      terisi:      parseInt(terisi, 10),
-      sisa_kuota:  kuota_maksimal - parseInt(terisi, 10),
-      penuh:       parseInt(terisi, 10) >= kuota_maksimal,
-    }));
-
-    successResponse(res, 'Jadwal berhasil diambil.', enriched, 200, { total: enriched.length });
+    successResponse(res, 'Jadwal berhasil diambil.', sorted, 200, { total: sorted.length });
   } catch (err) {
     next(err);
   }
@@ -62,28 +49,20 @@ const getAll = async (req, res, next) => {
  */
 const getById = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const { id }   = req.params;
+    const supabase = getSupabaseClient();
 
-    const { rows } = await query(
-      `SELECT j.*, d.nama_dokter, d.spesialis,
-              (SELECT COUNT(*) FROM pemesanan p WHERE p.id_jadwal = j.id_jadwal) AS terisi
-       FROM jadwal_praktik j
-       JOIN dokter d ON j.id_dokter = d.id_dokter
-       WHERE j.id_jadwal = $1`,
-      [id],
-    );
+    const { data, error } = await supabase
+      .from('jadwal_praktik')
+      .select(`
+        *, dokter (nama_dokter, spesialis)
+      `)
+      .eq('id_jadwal', id)
+      .single();
 
-    if (!rows.length) return notFoundResponse(res, 'Jadwal');
+    if (error || !data) return notFoundResponse(res, 'Jadwal');
 
-    const [jadwal] = rows; // Destructuring array
-    const { terisi, kuota_maksimal } = jadwal; // Destructuring object
-
-    successResponse(res, 'Detail jadwal berhasil diambil.', {
-      ...jadwal,
-      terisi:     parseInt(terisi, 10),
-      sisa_kuota: kuota_maksimal - parseInt(terisi, 10),
-      penuh:      parseInt(terisi, 10) >= kuota_maksimal,
-    });
+    successResponse(res, 'Detail jadwal berhasil diambil.', data);
   } catch (err) {
     next(err);
   }
