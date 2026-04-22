@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const map = L.map('rs-sehat-map').setView(salatigaLatLng, 13);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors | Dokutah RS Sehat'
+            attribution: '© OpenStreetMap contributors | Dokutah'
         }).addTo(map);
 
         // RS Sehat marker (demo location)
