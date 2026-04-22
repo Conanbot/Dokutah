@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "next dev",
+    "dev": "nodemon server.js",
     "lint": "echo 'Jalankan: npx eslint src/ server.js'"
   },
   "keywords": [
