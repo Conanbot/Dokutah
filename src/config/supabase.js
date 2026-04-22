@@ -102,10 +102,10 @@ const connectSupabase = async () => {
       .select('id_dokter')
       .limit(1);
 
-    // PGRST205 = tabel belum ada di schema cache (schema belum di-run Hans)
+    // PGRST205 = tabel belum ada di schema cache (schema belum di-run)
     // Biarkan server tetap jalan, endpoint yang relevan akan return error saat dipanggil
     if (error && error.code === 'PGRST205') {
-      console.warn('[Supabase] ⚠️  Tabel belum siap di DB (PGRST205). Pastikan Hans sudah run schema SQL.');
+      console.warn('[Supabase] ⚠️  Tabel belum siap di DB (PGRST205). Pastikan sudah run schema SQL.');
       console.warn('[Supabase]    Server tetap berjalan — endpoint DB akan error sampai schema siap.');
     } else if (error) {
       console.error('[Supabase] Connection error:', error.message);
