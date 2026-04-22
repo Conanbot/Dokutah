@@ -45,6 +45,7 @@ const createPoolConfig = () => {
     database: DB_NAME,
     password: DB_PASSWORD,
     port:     parseInt(DB_PORT, 10),
+    family:   4,
 
     // Pengaturan pool koneksi
     max:             10,  // maksimum koneksi bersamaan
