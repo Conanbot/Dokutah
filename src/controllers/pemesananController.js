@@ -2,113 +2,118 @@
 
 /**
  * src/controllers/pemesananController.js
- * Handler untuk proses pemesanan / pendaftaran ke dokter.
- * Menggunakan Supabase client — tidak ada koneksi PostgreSQL langsung.
+ * Disesuaikan dengan schema Hans:
+ *   - Tabel: pesanan, user (atau "users")
  *
- * Konsep JS yang diterapkan:
- * - Async/Await
- * - Destructuring
- * - Arrow functions
- * - Error handling
+ * Mapping:
+ *   id_pemesanan  → id_pesanan
+ *   nama_pasien   → dari tabel user (nama)
+ *   no_hp         → dari tabel user (nomor_telepon)
+ *   nomor_antrian → nomor_antrean
+ *   id_jadwal     → diganti id_faskes / id_rumah_sakit
+ *
+ * ⚠️  KOLOM YANG PERLU DITAMBAHKAN HANS KE TABEL pesanan:
+ *      id_jadwal_dokter INTEGER (FK ke jadwal_dokter) — agar booking by jadwal bisa jalan
  */
 
-const { getSupabaseClient }                              = require('../config/supabase');
+const { getSupabaseClient }                         = require('../config/supabase');
 const { successResponse, notFoundResponse,
-        clientErrorResponse }                            = require('../utils/responseHelper');
+        clientErrorResponse }                        = require('../utils/responseHelper');
 
 /**
  * create — POST /api/pemesanan
- * Membuat pemesanan baru dengan pengecekan kuota.
+ * Body: { id_user, id_faskes, id_rumah_sakit, jenis_pesanan, tanggal_periksa, catatan }
  */
 const create = async (req, res, next) => {
   try {
-    const { id_jadwal, nama_pasien, no_hp, catatan } = req.body;
+    const {
+      id_user, id_faskes, id_rumah_sakit,
+      jenis_pesanan, tanggal_periksa, catatan,
+    } = req.body;
+
+    if (!id_user) return clientErrorResponse(res, 'Parameter id_user wajib diisi.', 400);
+    if (!id_faskes && !id_rumah_sakit) {
+      return clientErrorResponse(res, 'Parameter id_faskes atau id_rumah_sakit wajib diisi.', 400);
+    }
+
     const supabase = getSupabaseClient();
 
-    // 1. Ambil data jadwal + kuota
-    const { data: jadwal, error: jadwalErr } = await supabase
-      .from('jadwal_praktik')
-      .select('kuota_maksimal')
-      .eq('id_jadwal', id_jadwal)
-      .single();
+    // Hitung nomor antrian hari ini di faskes/RS yang sama
+    let countQuery = supabase
+      .from('pesanan')
+      .select('*', { count: 'exact', head: true });
 
-    if (jadwalErr || !jadwal) {
-      return clientErrorResponse(res, 'Jadwal tidak ditemukan.', 404);
-    }
+    if (id_faskes)       countQuery = countQuery.eq('id_faskes', id_faskes);
+    if (id_rumah_sakit)  countQuery = countQuery.eq('id_rumah_sakit', id_rumah_sakit);
+    if (tanggal_periksa) countQuery = countQuery.eq('tanggal_periksa', tanggal_periksa);
 
-    // 2. Hitung yang sudah terdaftar
-    const { count, error: countErr } = await supabase
-      .from('pemesanan')
-      .select('*', { count: 'exact', head: true })
-      .eq('id_jadwal', id_jadwal);
-
+    const { count, error: countErr } = await countQuery;
     if (countErr) throw countErr;
 
-    const terisi = count || 0;
+    const nomorAntrean = (count || 0) + 1;
 
-    // 3. Cek kuota
-    if (terisi >= jadwal.kuota_maksimal) {
-      return clientErrorResponse(
-        res,
-        `Maaf, kuota jadwal ini sudah penuh (${jadwal.kuota_maksimal}/${jadwal.kuota_maksimal}).`,
-        400,
-      );
-    }
-
-    // 4. Insert pemesanan
-    const nomorAntrian = terisi + 1;
-
-    const { data: pemesanan, error: insertErr } = await supabase
-      .from('pemesanan')
+    const { data, error } = await supabase
+      .from('pesanan')
       .insert({
-        id_jadwal,
-        nama_pasien: nama_pasien.trim(),
-        no_hp:       no_hp || null,
-        catatan:     catatan || null,
-        nomor_antrian: nomorAntrian,
+        id_user,
+        id_faskes:        id_faskes        || null,
+        id_rumah_sakit:   id_rumah_sakit   || null,
+        jenis_pesanan:    jenis_pesanan    || 'Umum',
+        tanggal_periksa:  tanggal_periksa  || new Date().toISOString().split('T')[0],
+        nomor_antrean:    nomorAntrean,
+        status_antrean:   'menunggu',
+        catatan:          catatan          || null,
       })
       .select()
       .single();
 
-    if (insertErr) throw insertErr;
+    if (error) throw error;
 
     successResponse(
       res,
-      `Pendaftaran berhasil! Nomor antrian Anda: ${nomorAntrian}`,
-      { pemesanan, sisa_kuota: jadwal.kuota_maksimal - nomorAntrian },
+      `Pendaftaran berhasil! Nomor antrian Anda: ${nomorAntrean}`,
+      { pesanan: data, nomor_antrean: nomorAntrean },
       201,
     );
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 };
 
 /**
- * getByJadwal — GET /api/pemesanan?id_jadwal=
+ * getByJadwal — GET /api/pemesanan?id_jadwal=&id_faskes=&id_rumah_sakit=
  */
 const getByJadwal = async (req, res, next) => {
   try {
-    const { id_jadwal } = req.query;
-    const supabase      = getSupabaseClient();
+    const { id_jadwal, id_faskes, id_rumah_sakit } = req.query;
+    const supabase = getSupabaseClient();
 
-    if (!id_jadwal) {
-      return clientErrorResponse(res, 'Parameter id_jadwal wajib diisi.', 400);
-    }
-
-    const { data, error } = await supabase
-      .from('pemesanan')
+    let q = supabase
+      .from('pesanan')
       .select(`
-        *,
-        jadwal_praktik (hari, jam_mulai, jam_selesai, dokter (nama_dokter))
+        id_pesanan, jenis_pesanan, tanggal_periksa,
+        nomor_antrean, status_antrean,
+        id_faskes, id_rumah_sakit
       `)
-      .eq('id_jadwal', id_jadwal)
-      .order('nomor_antrian', { ascending: true });
+      .order('nomor_antrean', { ascending: true });
 
+    if (id_faskes)      q = q.eq('id_faskes', id_faskes);
+    if (id_rumah_sakit) q = q.eq('id_rumah_sakit', id_rumah_sakit);
+
+    const { data, error } = await q;
     if (error) throw error;
-    successResponse(res, 'Data pemesanan berhasil diambil.', data, 200, { total: data.length });
-  } catch (err) {
-    next(err);
-  }
+
+    // Normalise ke format lama agar frontend tidak perlu diubah
+    const result = data.map(p => ({
+      id_pemesanan:  p.id_pesanan,
+      nomor_antrian: p.nomor_antrean,
+      status:        p.status_antrean,
+      jenis:         p.jenis_pesanan,
+      tanggal:       p.tanggal_periksa,
+      id_faskes:     p.id_faskes,
+      id_rumah_sakit: p.id_rumah_sakit,
+    }));
+
+    successResponse(res, 'Data pemesanan berhasil diambil.', result, 200, { total: result.length });
+  } catch (err) { next(err); }
 };
 
 /**
@@ -120,17 +125,15 @@ const cancel = async (req, res, next) => {
     const supabase = getSupabaseClient();
 
     const { data, error } = await supabase
-      .from('pemesanan')
+      .from('pesanan')
       .delete()
-      .eq('id_pemesanan', id)
+      .eq('id_pesanan', id)
       .select()
       .single();
 
-    if (error || !data) return notFoundResponse(res, 'Pemesanan');
-    successResponse(res, 'Pemesanan berhasil dibatalkan.', data);
-  } catch (err) {
-    next(err);
-  }
+    if (error || !data) return notFoundResponse(res, 'Pesanan');
+    successResponse(res, 'Pesanan berhasil dibatalkan.', data);
+  } catch (err) { next(err); }
 };
 
 module.exports = { create, getByJadwal, cancel };
